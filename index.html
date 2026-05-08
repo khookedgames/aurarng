@@ -1,0 +1,931 @@
+<!DOCTYPE html>                   two new speed upgrades in the shop
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AURA RNG</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#04050f;--panel:rgba(8,10,28,0.92);--border:rgba(255,255,255,0.07);--text:#dde4f8;--muted:rgba(180,195,255,0.4);--coin:#fbbf24}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh;overflow-x:hidden}
+.bg-stars{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:radial-gradient(1px 1px at 12% 18%,#fff,transparent),radial-gradient(1px 1px at 34% 72%,#fff,transparent),radial-gradient(1px 1px at 58% 9%,#fff,transparent),radial-gradient(1px 1px at 78% 55%,#fff,transparent),radial-gradient(1px 1px at 91% 22%,#fff,transparent),radial-gradient(1px 1px at 5% 88%,#fff,transparent),radial-gradient(1px 1px at 46% 44%,#fff,transparent),radial-gradient(1.5px 1.5px at 67% 81%,rgba(180,200,255,.8),transparent),radial-gradient(1.5px 1.5px at 23% 61%,rgba(180,200,255,.7),transparent),radial-gradient(2px 2px at 82% 35%,rgba(160,180,255,.6),transparent);
+  animation:starDrift 90s linear infinite}
+.bg-stars:nth-child(2){animation-duration:55s;animation-direction:reverse;opacity:.5;transform:scale(1.4)}
+@keyframes starDrift{0%{background-position:0 0}100%{background-position:500px 300px}}
+.bg-nebula{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 55% 40% at 15% 50%,rgba(80,40,160,.08),transparent),radial-gradient(ellipse 45% 55% at 82% 25%,rgba(20,80,180,.06),transparent),radial-gradient(ellipse 38% 45% at 55% 85%,rgba(160,30,100,.05),transparent)}
+.app{position:relative;z-index:1;max-width:880px;margin:0 auto;padding:16px 14px 60px;display:flex;flex-direction:column;align-items:center;gap:18px}
+header{text-align:center;padding-top:8px}
+header h1{font-family:'Cinzel',serif;font-size:clamp(2rem,6vw,3.6rem);font-weight:900;letter-spacing:.15em;background:linear-gradient(135deg,#b8a8ff 0%,#7eb8ff 45%,#ffb8f0 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 28px rgba(140,100,255,.5))}
+header p{margin-top:4px;font-size:.85rem;color:var(--muted);letter-spacing:.3em;text-transform:uppercase}
+.top-bar{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%}
+.chip{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:7px 16px;font-size:.82rem;font-weight:600;letter-spacing:.04em;display:flex;align-items:center;gap:7px}
+.chip .lbl{color:var(--muted);font-weight:400}
+#coinChip .val{color:var(--coin)}
+.luck-active{border-color:rgba(251,191,36,.4)!important}
+.luck-active .val{color:#fbbf24!important}
+.equipped-section{width:100%;background:var(--panel);border:1px solid var(--border);border-radius:20px;overflow:hidden;transition:border-color .4s,box-shadow .4s}
+.equipped-header{padding:10px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.equipped-header h2{font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.3em;color:var(--muted);text-transform:uppercase}
+.equipped-empty{padding:24px;text-align:center;color:var(--muted);font-size:.9rem;letter-spacing:.1em}
+#effectCanvas{width:100%;height:200px;display:block}
+.equipped-info{padding:10px 18px 14px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border)}
+.equipped-name{font-family:'Cinzel',serif;font-size:1.2rem;font-weight:700}
+.equipped-rarity{font-size:.75rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);margin-top:2px}
+.unequip-btn{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-family:'Rajdhani',sans-serif;font-size:.82rem;font-weight:600;color:var(--muted);cursor:pointer;transition:all .2s}
+.unequip-btn:hover{background:rgba(255,255,255,.1);color:var(--text)}
+.roll-wrap{width:100%;max-width:500px}
+.roll-card{background:var(--panel);border:2px solid var(--border);border-radius:22px;padding:36px 24px;min-height:268px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;position:relative;overflow:hidden;transition:border-color .35s,box-shadow .45s}
+.roll-card.cycling{transition:none}
+.roll-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 110%,var(--g,transparent),transparent 65%);opacity:.35;pointer-events:none;transition:background .4s}
+.card-idle{color:var(--muted);font-size:1rem;letter-spacing:.2em;font-family:'Cinzel',serif}
+.card-rarity{font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.4em;text-transform:uppercase}
+.card-emoji{font-size:4.5rem;line-height:1}
+.card-name{font-family:'Cinzel',serif;font-size:clamp(1.4rem,4vw,2.2rem);font-weight:700;color:#fff}
+.card-desc{font-size:.88rem;color:var(--muted);font-weight:300;max-width:260px;line-height:1.4}
+.card-chance{font-size:.74rem;color:rgba(180,195,255,.28);letter-spacing:.08em;margin-top:-4px}
+.equip-now-btn{margin-top:4px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:8px 28px;font-family:'Cinzel',serif;font-size:.8rem;font-weight:700;letter-spacing:.15em;color:#fff;cursor:pointer;transition:background .2s,transform .15s;text-transform:uppercase}
+.equip-now-btn:hover{background:rgba(255,255,255,.14);transform:translateY(-1px)}
+@keyframes revealPop{0%{transform:scale(.87);opacity:0}60%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
+.revealed-anim{animation:revealPop .45s cubic-bezier(.34,1.56,.64,1) forwards}
+.card-particles{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:20px}
+.p-dot{position:absolute;border-radius:50%;animation:pFloat var(--d,2s) ease-out forwards;opacity:0}
+@keyframes pFloat{0%{transform:translateY(10px) scale(0);opacity:1}80%{opacity:.7}100%{transform:translateY(calc(-70px - var(--x,0px))) scale(.2);opacity:0}}
+.roll-btn-wrap{text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
+.roll-btn{background:linear-gradient(135deg,#3d22aa,#6b30dd,#8b50ee);border:none;border-radius:50px;padding:16px 56px;font-family:'Cinzel',serif;font-size:1.2rem;font-weight:700;letter-spacing:.2em;color:#fff;cursor:pointer;transition:transform .15s,box-shadow .3s,opacity .2s;box-shadow:0 0 28px rgba(110,50,220,.5),0 4px 18px rgba(0,0,0,.5);text-transform:uppercase;position:relative;overflow:hidden}
+.roll-btn::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);background-size:200%;animation:btnShimmer 3s linear infinite}
+@keyframes btnShimmer{0%{background-position:-200% center}100%{background-position:200% center}}
+.roll-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 0 44px rgba(110,50,220,.7),0 8px 26px rgba(0,0,0,.5)}
+.roll-btn:active:not(:disabled){transform:scale(.97)}
+.roll-btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* Auto-roller toggle button */
+.auto-btn{border:none;border-radius:50px;padding:10px 32px;font-family:'Cinzel',serif;font-size:.85rem;font-weight:700;letter-spacing:.15em;color:#fff;cursor:pointer;transition:transform .15s,box-shadow .3s,opacity .2s;text-transform:uppercase;position:relative;overflow:hidden}
+.auto-btn.off{background:linear-gradient(135deg,#1a3a1a,#2a5a2a,#3a7a3a);box-shadow:0 0 18px rgba(50,180,50,.35),0 4px 14px rgba(0,0,0,.5)}
+.auto-btn.off:hover{transform:translateY(-1px);box-shadow:0 0 28px rgba(50,200,50,.5),0 6px 18px rgba(0,0,0,.5)}
+.auto-btn.on{background:linear-gradient(135deg,#7a1a1a,#aa2a2a,#cc3a3a);box-shadow:0 0 18px rgba(200,50,50,.5),0 4px 14px rgba(0,0,0,.5);animation:autoGlow 1.5s ease-in-out infinite}
+@keyframes autoGlow{0%,100%{box-shadow:0 0 18px rgba(200,50,50,.5),0 4px 14px rgba(0,0,0,.5)}50%{box-shadow:0 0 32px rgba(220,80,80,.8),0 4px 14px rgba(0,0,0,.5)}}
+.auto-btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+
+.shop-section{width:100%}
+.shop-toggle{width:100%;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:'Cinzel',serif;font-size:.8rem;letter-spacing:.3em;color:var(--muted);text-transform:uppercase;transition:background .2s}
+.shop-toggle:hover{background:rgba(255,255,255,.06)}
+.shop-arrow{transition:transform .3s}
+.shop-open .shop-arrow{transform:rotate(180deg)}
+.shop-body{display:none;margin-top:8px;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px}
+.shop-open .shop-body{display:block}
+.shop-section-label{font-size:.72rem;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;padding-left:2px}
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-top:4px}
+.shop-item{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:6px;transition:background .2s}
+.shop-item:hover{background:rgba(255,255,255,.06)}
+.shop-item-name{font-family:'Cinzel',serif;font-size:.82rem;font-weight:700;color:var(--text)}
+.shop-item-desc{font-size:.76rem;color:var(--muted);line-height:1.35;flex:1}
+.shop-item-price{font-size:.8rem;font-weight:700;color:var(--coin);display:flex;align-items:center;gap:4px}
+.buy-btn{background:linear-gradient(135deg,rgba(251,191,36,.15),rgba(251,191,36,.05));border:1px solid rgba(251,191,36,.3);border-radius:8px;padding:6px 0;font-family:'Rajdhani',sans-serif;font-size:.8rem;font-weight:700;letter-spacing:.1em;color:var(--coin);cursor:pointer;transition:background .2s,border-color .2s,transform .1s;text-transform:uppercase}
+.buy-btn:hover:not(:disabled){background:rgba(251,191,36,.2);border-color:rgba(251,191,36,.5);transform:translateY(-1px)}
+.buy-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.buy-btn.owned{color:#4ade80;border-color:rgba(74,222,128,.3);background:rgba(74,222,128,.08);cursor:default}
+
+/* Roll History */
+.history-section{width:100%}
+.history-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 2px}
+.history-header h2{font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.3em;color:var(--muted);text-transform:uppercase}
+.history-count{font-size:.72rem;color:var(--muted);letter-spacing:.05em}
+.history-grid{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;max-height:280px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(110,50,220,.3) transparent}
+.h-chip{background:rgba(255,255,255,.04);border:1px solid var(--bc,rgba(255,255,255,.1));border-radius:7px;padding:4px 10px;font-size:.78rem;font-weight:600;display:flex;align-items:center;gap:5px;color:var(--bc,#9ca3af);animation:chipIn .25s ease;cursor:pointer;transition:background .15s}
+.h-chip:hover{background:rgba(255,255,255,.08)}
+@keyframes chipIn{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
+
+.coin-toast{position:fixed;top:20px;right:20px;z-index:1000;background:rgba(20,18,10,.9);border:1px solid rgba(251,191,36,.4);border-radius:10px;padding:10px 20px;font-family:'Cinzel',serif;font-size:.9rem;font-weight:700;color:var(--coin);animation:toastIn .3s ease,toastOut .3s ease 1.7s forwards;pointer-events:none}
+@keyframes toastIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateY(-10px)}}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:rgba(110,50,220,.3);border-radius:3px}
+
+/* Save indicator */
+.save-indicator{font-size:.68rem;color:var(--muted);letter-spacing:.1em;opacity:0;transition:opacity .3s}
+.save-indicator.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="bg-stars"></div>
+<div class="bg-stars"></div>
+<div class="bg-nebula"></div>
+<div class="app">
+  <header><h1>AURA RNG</h1><p>110 Auras · 12 Rarities</p></header>
+  <div class="top-bar">
+    <div class="chip" id="coinChip"><span class="lbl">Coins</span><span class="val" id="coinDisplay">0</span><span>💰</span></div>
+    <div class="chip"><span class="lbl">Rolls</span><span class="val" id="rollsDisplay">0</span></div>
+    <div class="chip" id="luckChip"><span class="lbl">Luck</span><span class="val" id="luckDisplay">×1.0</span></div>
+    <div class="chip"><span class="lbl">Speed</span><span class="val" id="speedDisplay">Lv.0</span></div>
+  </div>
+  <div class="equipped-section" id="equippedSection">
+    <div class="equipped-header"><h2>⚡ Equipped Aura</h2></div>
+    <div class="equipped-empty" id="equippedEmpty">No aura equipped — roll and equip one!</div>
+    <canvas id="effectCanvas" style="display:none"></canvas>
+    <div class="equipped-info" id="equippedInfo" style="display:none">
+      <div><div class="equipped-name" id="equippedName">—</div><div class="equipped-rarity" id="equippedRarity">—</div></div>
+      <button class="unequip-btn" onclick="unequip()">✕ Unequip</button>
+    </div>
+  </div>
+  <div class="roll-wrap">
+    <div class="roll-card" id="rollCard">
+      <div class="card-particles" id="cardParticles"></div>
+      <div id="idleView"><div class="card-idle">Roll to discover your fate</div></div>
+      <div id="resultView" style="display:none;flex-direction:column;align-items:center;gap:10px">
+        <div class="card-rarity" id="cRarity"></div>
+        <div class="card-emoji" id="cEmoji"></div>
+        <div class="card-name" id="cName"></div>
+        <div class="card-desc" id="cDesc"></div>
+        <div class="card-chance" id="cChance"></div>
+        <button class="equip-now-btn" id="equipBtn" onclick="equipCurrent()">⚡ Equip</button>
+      </div>
+    </div>
+  </div>
+  <div class="roll-btn-wrap">
+    <button class="roll-btn" id="rollBtn" onclick="startRoll()">⚡ ROLL</button>
+    <button class="auto-btn off" id="autoBtn" style="display:none" onclick="toggleAutoRoll()">🤖 AUTO: OFF</button>
+    <span class="save-indicator" id="saveIndicator">💾 Saved</span>
+  </div>
+  <div class="shop-section">
+    <div class="shop-toggle" onclick="toggleShop()"><span>🛒 Shop</span><span class="shop-arrow" id="shopArrow">▼</span></div>
+    <div class="shop-body" id="shopBody">
+      <div class="shop-section-label">🧪 Luck Potions (temporary boost)</div>
+      <div class="shop-grid" id="shopGrid"></div>
+      <div class="shop-section-label" style="margin-top:16px">⚡ Speed Upgrades (permanent)</div>
+      <div class="shop-grid" id="speedGrid"></div>
+      <div class="shop-section-label" style="margin-top:16px">🤖 Automation</div>
+      <div class="shop-grid" id="autoGrid"></div>
+    </div>
+  </div>
+  <div class="history-section">
+    <div class="history-header">
+      <h2>📜 Roll History</h2>
+      <span class="history-count" id="historyCount">0 rolls</span>
+    </div>
+    <div class="history-grid" id="historyGrid"></div>
+  </div>
+</div>
+<script>
+// ═══════════════════════════════════════════
+//  RARITIES & DATA
+// ═══════════════════════════════════════════
+const RARITIES={
+  "Common":        {color:"#9ca3af",weight:42,    glow:"rgba(156,163,175,.5)"},
+  "Uncommon":      {color:"#4ade80",weight:22,    glow:"rgba(74,222,128,.5)"},
+  "Rare":          {color:"#60a5fa",weight:12,    glow:"rgba(96,165,250,.5)"},
+  "Epic":          {color:"#c084fc",weight:8,     glow:"rgba(192,132,252,.5)"},
+  "Legendary":     {color:"#fbbf24",weight:4.5,   glow:"rgba(251,191,36,.6)"},
+  "Mythic":        {color:"#fb923c",weight:2.5,   glow:"rgba(249,115,22,.6)"},
+  "Divine":        {color:"#f472b6",weight:1.2,   glow:"rgba(244,114,182,.6)"},
+  "Cosmic":        {color:"#22d3ee",weight:.5,    glow:"rgba(34,211,238,.7)"},
+  "Celestial":     {color:"#e0e7ff",weight:.1,    glow:"rgba(224,231,255,.8)"},
+  "Transcendent":  {color:"#fff9c4",weight:.07,   glow:"rgba(255,249,196,.8)"},
+  "Primordial":    {color:"#ff6b35",weight:.04,   glow:"rgba(255,107,53,.85)"},
+  "Abyssal":       {color:"#9b00ff",weight:.015,  glow:"rgba(155,0,255,.9)"},
+  "Eternal":       {color:"#00ffaa",weight:.005,  glow:"rgba(0,255,170,.9)"},
+  "Omega":         {color:"#ff0080",weight:.001,  glow:"rgba(255,0,128,.95)"},
+  "Secret":        {color:"#ef4444",weight:.025,  glow:"rgba(239,68,68,.7)"},
+  "Ultra Secret":  {color:"#ff00ff",weight:.0001,  glow:"rgba(255,0,255,.9)"},
+  "Null":          {color:"#ffffff",weight:.00001, glow:"rgba(255,255,255,1)"},
+};
+const RARITY_RANK=Object.keys(RARITIES);
+const COIN_VAL={"Common":5,"Uncommon":15,"Rare":45,"Epic":120,"Legendary":350,"Mythic":900,"Divine":2500,"Cosmic":8000,"Celestial":30000,"Transcendent":100000,"Primordial":500000,"Abyssal":2000000,"Eternal":10000000,"Omega":50000000,"Secret":400000,"Ultra Secret":2000000,"Null":999999999};
+const RAW=[
+  ["Ember","🔥","Common","A tiny, stubborn flame","ember"],
+  ["Droplet","💧","Common","A cool water droplet","droplet"],
+  ["Pebble","🪨","Common","Just a grey rock","pebble"],
+  ["Breeze","🌬️","Common","A gentle passing wind","breeze"],
+  ["Leaf","🍃","Common","Freshly fallen from a tree","leaf"],
+  ["Spark","⚡","Common","A weak electric discharge","spark"],
+  ["Frost","❄️","Common","A thin icy glaze","frost"],
+  ["Mud","🟤","Common","Damp ordinary earth","mud"],
+  ["Smoke","💨","Common","Wisps of grey smoke","smoke"],
+  ["Acorn","🌰","Common","A humble fallen seed","acorn"],
+  ["Flame","🔥","Uncommon","A steadily burning fire","flame"],
+  ["Wave","🌊","Uncommon","A small but proud ocean wave","wave"],
+  ["Granite","🪨","Uncommon","Solid and unyielding stone","granite"],
+  ["Thunderclap","⛈️","Uncommon","A sudden crack of thunder","thunderclap"],
+  ["Fern","🌿","Uncommon","Ancient and quietly alive","fern"],
+  ["Static","⚡","Uncommon","Crackling electric energy","static"],
+  ["Hail","🌨️","Uncommon","Pellets of frozen rain","hail"],
+  ["Cinder","💫","Uncommon","Glowing ash riding the wind","cinder"],
+  ["Fog","🌫️","Uncommon","A thick vision-blurring mist","fog"],
+  ["Quicksand","🏜️","Uncommon","Deceivingly solid ground","quicksand"],
+  ["Vine","🌱","Uncommon","Slowly reaching for the sun","vine"],
+  ["Sleet","🌧️","Uncommon","Rain and ice in equal measure","sleet"],
+  ["Inferno","🔥","Rare","A roaring wall of fire","inferno"],
+  ["Tsunami","🌊","Rare","A towering tidal force","tsunami"],
+  ["Earthquake","🌍","Rare","The earth splits beneath you","earthquake"],
+  ["Hurricane","🌀","Rare","Winds that level forests","hurricane"],
+  ["Ancient Grove","🌲","Rare","Trees older than memory","ancientGrove"],
+  ["Lightning","⚡","Rare","A bolt from above","lightning"],
+  ["Blizzard","❄️","Rare","A howling polar storm","blizzard"],
+  ["Lava Flow","🌋","Rare","Molten rock slowly consuming","lavaFlow"],
+  ["Aurora","🌌","Rare","Ribbons of cosmic light","aurora"],
+  ["Shadow","🌑","Rare","Darkness with a will","shadow"],
+  ["Sandstorm","🌪️","Rare","A swirling wall of sand","sandstorm"],
+  ["Crystal Rain","💎","Rare","Shards of ice like jewels","crystalRain"],
+  ["Void Mist","🌫️","Rare","Fog that absorbs light","voidMist"],
+  ["Volcano","🌋","Epic","A mountain of furious fire","volcano"],
+  ["Typhoon","🌀","Epic","A colossal oceanic storm","typhoon"],
+  ["Meteor Shower","☄️","Epic","Stars raining from the sky","meteorShower"],
+  ["Eclipse","🌑","Epic","Moon swallows the sun","eclipse"],
+  ["Prism","🔮","Epic","All light, all directions","prism"],
+  ["Phoenix","🦅","Epic","Born from its own ashes","phoenix"],
+  ["Dragon Scale","🐉","Epic","Shed by an ancient wyrm","dragonScale"],
+  ["Serpent","🐍","Epic","Coiled around the world","serpent"],
+  ["Amethyst","💜","Epic","A gem of raw arcane power","amethyst"],
+  ["Abyss","🕳️","Epic","Depth without a bottom","abyss"],
+  ["Cursed Flame","🟣","Epic","Burns cold and purple","cursedFlame"],
+  ["Time Fragment","⏳","Epic","A splinter of shattered time","timeFragment"],
+  ["Soul Shard","👻","Epic","A fragment of a lost soul","soulShard"],
+  ["Solar Flare","☀️","Legendary","A burst from the sun's corona","solarFlare"],
+  ["Black Hole","🌑","Legendary","Nothing escapes its pull","blackHole"],
+  ["Nebula","🌌","Legendary","A nursery of future stars","nebula"],
+  ["Supernova","💥","Legendary","A star's final glorious death","supernova"],
+  ["Ancient Void","🌌","Legendary","Emptiness older than matter","ancientVoid"],
+  ["Time Rift","⏳","Legendary","A tear in the fabric of time","timeRift"],
+  ["Infinity Loop","♾️","Legendary","Beginning becomes the end","infinityLoop"],
+  ["Dark Galaxy","🌌","Legendary","Stars swallowed by darkness","darkGalaxy"],
+  ["Dark Matter","⬛","Legendary","Invisible mass that shapes all","darkMatter"],
+  ["Comet Storm","☄️","Legendary","A barrage of stellar wanderers","cometStorm"],
+  ["Forgotten God","🗿","Legendary","Once worshipped, now silent","forgottenGod"],
+  ["Death's Touch","💀","Legendary","Everything it grazes withers","deathsTouch"],
+  ["Singularity","⭕","Mythic","All points of space-time, one","singularity"],
+  ["Antimatter","⚛️","Mythic","Destroys all it contacts","antimatter"],
+  ["Quasar","🌠","Mythic","Brightest object in existence","quasar"],
+  ["Pulsar","💫","Mythic","A neutron star's cosmic beacon","pulsar"],
+  ["Neutron Star","⭐","Mythic","Denser than imagination","neutronStar"],
+  ["Wormhole","🌀","Mythic","A tunnel through space itself","wormhole"],
+  ["Dark Energy","🌑","Mythic","The force tearing space apart","darkEnergy"],
+  ["Event Horizon","🔮","Mythic","The point of no return","eventHorizon"],
+  ["Paradox","♾️","Mythic","True and false simultaneously","paradox"],
+  ["Requiem","🎵","Mythic","The last song the cosmos sings","requiem"],
+  ["Universe","🌌","Divine","All that is and ever was","universe"],
+  ["Multiverse","🌐","Divine","Infinite worlds, infinite fate","multiverse"],
+  ["Omniscience","👁️","Divine","Knowledge of all things","omniscience"],
+  ["Eternal Flame","🔥","Divine","Burns since before time began","eternalFlame"],
+  ["Divine Light","✨","Divine","Light that precedes the sun","divineLight"],
+  ["Celestial Storm","⛈️","Divine","Storm born between the stars","celestialStorm"],
+  ["Sacred Void","🕳️","Divine","Emptiness that is everything","sacredVoid"],
+  ["Angel's Tears","👼","Divine","Sorrow and grace combined","angelsTears"],
+  ["Titan's Wrath","⚡","Divine","Power beyond mortal scale","titansWrath"],
+  ["Elysium","🏛️","Divine","The perfect paradise","elysium"],
+  ["Chaos","🌀","Cosmic","The state before all order","chaosEffect"],
+  ["Creation","✨","Cosmic","The first moment of existence","creation"],
+  ["Destruction","💥","Cosmic","The last moment before silence","destruction"],
+  ["Existence","🌍","Cosmic","The fact that anything is","existence"],
+  ["Nothingness","🌑","Cosmic","Before the beginning","nothingness"],
+  ["The Rift","🌌","Cosmic","Where reality tears open","theRift"],
+  ["Oblivion","🌑","Cosmic","Total and permanent erasure","oblivion"],
+  ["Eternity","♾️","Cosmic","Time without bound","eternity"],
+  ["Primordial Sea","🌊","Cosmic","The ocean before oceans","primordialSea"],
+  ["The Cycle","🔄","Cosmic","Death feeding life feeding death","theCycle"],
+  ["Godhood","👑","Celestial","To become more than divine","godhood"],
+  ["Transcendence","✨","Celestial","Beyond all prior limits","transcendence"],
+  ["Omnipotence","⚡","Celestial","Power without restriction","omnipotence"],
+  ["The Absolute","🌌","Celestial","That which contains all things","theAbsolute"],
+  ["Alpha","🔯","Celestial","The very first","alpha"],
+  ["Omega","🔯","Celestial","The very last","omega"],
+  ["The Beginning","🌅","Celestial","Before even chaos existed","theBeginning"],
+  ["The End","🌆","Celestial","After even silence fades","theEnd"],
+  ["Pure Light","💫","Celestial","Light without a source","pureLight"],
+  ["Pure Darkness","🌑","Celestial","Dark that absorbs concepts","pureDarkness"],
+  ["The One","☀️","Transcendent","Singular. Uncontested. Absolute.","theOne"],
+  ["Beyond","🌌","Transcendent","There is no word. Only this.","beyond"],
+  ["True Void","🕳️","Transcendent","Even nothingness is not this empty","trueVoid"],
+  ["All That Is","🌐","Transcendent","The sum of every possibility","allThatis"],
+  ["The Impossible","❓","Transcendent","You shouldn't have this. Yet here you are.","theImpossible"],
+  ["[REDACTED]","🔲","Secret","This was never meant to exist","redacted"],
+  ["???","🎲","Secret","Even the system doesn't know","unknown"],
+  ["ERROR","🔴","Secret","Something has gone terribly wrong","error"],
+  ["glitch","💻","Ultra Secret","Reality's seams are showing","glitch"],
+  ["̛̗0̶44̴̨","❌","Ultra Secret","You have reached the end of all things","zeroFortyFour"],
+// PRIMORDIAL
+  ["First Flame","🔥","Primordial","The fire that lit the universe","firstFlame"],
+  ["Genesis","🌱","Primordial","The moment before the first moment","genesis"],
+  ["Void Sovereign","🕳️","Primordial","Ruler of the space between spaces","voidSovereign"],
+  ["Ancient Titan","⚡","Primordial","Power that predates the gods","ancientTitan"],
+  ["Primordial Chaos","🌀","Primordial","The unordered state of raw potential","primordialChaos"],
+  ["World Serpent","🐍","Primordial","The serpent that encircles all existence","worldSerpent"],
+  ["Primal Storm","⛈️","Primordial","A storm before weather existed","primalStorm"],
+  ["Origin Point","⭕","Primordial","The single point from which all began","originPoint"],
+  ["Deep Abyss","🌑","Primordial","Deeper than the concept of depth","deepAbyss"],
+  ["Titan's Heart","💜","Primordial","The still-beating heart of a slain god","titansHeart"],
+  // ABYSSAL
+  ["The Devourer","🕳️","Abyssal","It has consumed entire realities","theDevourer"],
+  ["Void Wraith","👻","Abyssal","A specter made of pure absence","voidWraith"],
+  ["Corruption","🟣","Abyssal","Everything it touches becomes nothing","corruption"],
+  ["Abyssal Eye","👁️","Abyssal","It sees through the fabric of being","abyssalEye"],
+  ["Dark Sovereign","🌑","Abyssal","Ruler of all that is unlit","darkSovereign"],
+  ["Entropy","♾️","Abyssal","The slow death of all structure","entropy"],
+  ["The Forgotten","🗿","Abyssal","So old even gods don't remember it","theForgotten"],
+  ["Soul Abyss","💀","Abyssal","Where lost souls dissolve to nothing","soulAbyss"],
+  ["Nihil","⬛","Abyssal","Beyond nihilism — pure negation","nihil"],
+  ["The Unmaker","❌","Abyssal","It unmakes what cannot be unmade","theUnmaker"],
+  // ETERNAL
+  ["Infinite Light","✨","Eternal","Light that has always been and always will","infiniteLight"],
+  ["Deathless","💀","Eternal","That which cannot end","deathless"],
+  ["Eternal Void","🕳️","Eternal","The void that never had a beginning","eternalVoid"],
+  ["Timeless","⏳","Eternal","Outside the flow of time entirely","timeless"],
+  ["Ever-Present","🌌","Eternal","Existing at every moment simultaneously","everPresent"],
+  ["Undying Star","⭐","Eternal","A star that burns beyond its death","undyingStar"],
+  ["The Unending","♾️","Eternal","A loop with no origin or terminus","theUnending"],
+  ["Soul of Creation","🌅","Eternal","The creative force that never stops","soulOfCreation"],
+  ["Forever Flame","🔥","Eternal","It has never and will never go out","foreverFlame"],
+  ["Beyond Death","💫","Eternal","The state that exists past the end","beyondDeath"],
+  // OMEGA
+  ["Omega Pulse","💥","Omega","A heartbeat that ends universes","omegaPulse"],
+  ["The Final Form","🌌","Omega","Evolution cannot go further","theFinalForm"],
+  ["Apocalypse","☄️","Omega","The end that never stops ending","apocalypse"],
+  ["God Slayer","⚡","Omega","The force that ends divinity","godSlayer"],
+  ["Universal Collapse","🌀","Omega","Everything falling into one point","universalCollapse"],
+  ["The Last Word","🔮","Omega","After this, silence","theLastWord"],
+  ["Oblivion's Edge","🌑","Omega","The blade that cuts existence","oblivionsEdge"],
+  ["Reality Breaker","❓","Omega","The concept that shatters what is real","realityBreaker"],
+  ["Dimension Zero","⭕","Omega","A dimension with no properties","dimensionZero"],
+  ["The Terminus","🔯","Omega","The absolute final point of all things","theTerminus"],
+  // NULL
+  ["NULL","🔳","Null","Before existence. After oblivion. This should not be.","nullAura"],
+];
+
+const ITEMS=RAW.map(([name,emoji,rarity,desc,effectId])=>({
+  name,emoji,rarity,desc,effectId,
+  color:RARITIES[rarity].color,glow:RARITIES[rarity].glow,weight:RARITIES[rarity].weight
+}));
+const TOTAL_W=ITEMS.reduce((s,i)=>s+i.weight,0);
+const CUM_W=new Float64Array(ITEMS.length);
+{let a=0;ITEMS.forEach((it,i)=>{a+=it.weight;CUM_W[i]=a;})}
+
+// ═══════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════
+let st={coins:0,rolls:0,luck:1,luckLeft:0,speedLevel:0,equippedItem:null,lastResult:null,history:[],rolling:false,autoRollerOwned:false,autoRolling:false};
+const SPEED_DUR=[3200,2400,1700,1100,700,400];
+// ═══════════════════════════════════════════
+//  SAVE / LOAD
+// ═══════════════════════════════════════════
+const SAVE_KEY='auraRNG_v1';
+let _saveTimer=null;
+
+function saveGame(){
+  try{
+    const data={
+      coins:st.coins,rolls:st.rolls,luck:st.luck,luckLeft:st.luckLeft,
+      speedLevel:st.speedLevel,autoRollerOwned:st.autoRollerOwned,
+      history:st.history.map(i=>i.name),
+      equippedItem:st.equippedItem?st.equippedItem.name:null
+    };
+    localStorage.setItem(SAVE_KEY,JSON.stringify(data));
+    // Flash save indicator
+    const ind=document.getElementById('saveIndicator');
+    ind.classList.add('show');
+    clearTimeout(_saveTimer);
+    _saveTimer=setTimeout(()=>ind.classList.remove('show'),1500);
+  }catch(e){}
+}
+
+function loadGame(){
+  try{
+    const raw=localStorage.getItem(SAVE_KEY);
+    if(!raw)return;
+    const data=JSON.parse(raw);
+    st.coins=data.coins||0;
+    st.rolls=data.rolls||0;
+    st.luck=data.luck||1;
+    st.luckLeft=data.luckLeft||0;
+    st.speedLevel=data.speedLevel||0;
+    st.autoRollerOwned=data.autoRollerOwned||false;
+    if(Array.isArray(data.history)){
+      data.history.forEach(name=>{
+        const item=ITEMS.find(i=>i.name===name);
+        if(item)st.history.push(item);
+      });
+    }
+    if(data.equippedItem){
+      const item=ITEMS.find(i=>i.name===data.equippedItem);
+      if(item){st.equippedItem=item;st.lastResult=item;}
+    }
+  }catch(e){}
+}
+
+// ═══════════════════════════════════════════
+//  WEIGHTED RANDOM
+// ═══════════════════════════════════════════
+function weightedRandom(){
+  if(st.luck===1){
+    const r=Math.random()*TOTAL_W;
+    let lo=0,hi=ITEMS.length-1;
+    while(lo<hi){const m=(lo+hi)>>1;CUM_W[m]<r?lo=m+1:hi=m;}
+    return ITEMS[lo];
+  }
+  const lm=st.luck;let total=0;
+  const ws=new Float64Array(ITEMS.length);
+  for(let i=0;i<ITEMS.length;i++){
+    const rank=RARITY_RANK.indexOf(ITEMS[i].rarity);
+    let w=ITEMS[i].weight;if(rank>=4)w*=(1+(lm-1)*rank*.1);
+    ws[i]=w;total+=w;
+  }
+  let r=Math.random()*total;
+  for(let i=0;i<ITEMS.length;i++){r-=ws[i];if(r<=0)return ITEMS[i];}
+  return ITEMS[0];
+}
+
+// ═══════════════════════════════════════════
+//  CANVAS ENGINE
+// ═══════════════════════════════════════════
+let _raf=null;
+let _ctx=null,_W=0,_H=0,_t=0;
+let _renderFn=null;
+const MAX_P=300;
+const px=new Float32Array(MAX_P),py=new Float32Array(MAX_P);
+const pvx=new Float32Array(MAX_P),pvy=new Float32Array(MAX_P);
+const plife=new Float32Array(MAX_P),pmaxlife=new Float32Array(MAX_P);
+const psz=new Float32Array(MAX_P),phue=new Float32Array(MAX_P);
+const ptype=new Uint8Array(MAX_P);
+let pcount=0;
+function addParticle(x,y,vx,vy,life,sz,hue,type=0){
+  if(pcount>=MAX_P)return;
+  px[pcount]=x;py[pcount]=y;pvx[pcount]=vx;pvy[pcount]=vy;
+  plife[pcount]=life;pmaxlife[pcount]=life;
+  psz[pcount]=sz;phue[pcount]=hue;ptype[pcount]=type;
+  pcount++;
+}
+function removeParticle(i){
+  pcount--;
+  px[i]=px[pcount];py[i]=py[pcount];pvx[i]=pvx[pcount];pvy[i]=pvy[pcount];
+  plife[i]=plife[pcount];pmaxlife[i]=pmaxlife[pcount];
+  psz[i]=psz[pcount];phue[i]=phue[pcount];ptype[i]=ptype[pcount];
+}
+function stopEffect(){
+  if(_raf){cancelAnimationFrame(_raf);_raf=null;}
+  pcount=0;_renderFn=null;_t=0;
+  if(_ctx)_ctx.clearRect(0,0,_W,_H);
+}
+function initCanvas(){
+  const cv=document.getElementById('effectCanvas');
+  const dpr=Math.min(devicePixelRatio||1,2);
+  cv.width=cv.offsetWidth*dpr;cv.height=cv.offsetHeight*dpr;
+  _ctx=cv.getContext('2d');
+  _ctx.scale(dpr,dpr);
+  _W=cv.offsetWidth;_H=cv.offsetHeight;
+}
+function parseRGB(hex){
+  const c=hex.replace('#','');
+  return[parseInt(c.slice(0,2),16),parseInt(c.slice(2,4),16),parseInt(c.slice(4,6),16)];
+}
+function hex2rgb(hex){
+  const h=hex.replace('#','');
+  return[parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];
+}
+function fillCircle(x,y,r,style){
+  _ctx.beginPath();_ctx.arc(x,y,r,0,6.2832);_ctx.fillStyle=style;_ctx.fill();
+}
+function strokeCircle(x,y,r,style,lw){
+  _ctx.beginPath();_ctx.arc(x,y,r,0,6.2832);_ctx.strokeStyle=style;_ctx.lineWidth=lw;_ctx.stroke();
+}
+function line(x0,y0,x1,y1,style,lw){
+  _ctx.beginPath();_ctx.moveTo(x0,y0);_ctx.lineTo(x1,y1);_ctx.strokeStyle=style;_ctx.lineWidth=lw;_ctx.stroke();
+}
+
+// ═══════════════════════════════════════════
+//  EFFECTS (all original effects preserved)
+// ═══════════════════════════════════════════
+const EFFECTS={
+ember:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.18)addParticle(_W/2+(Math.random()-.5)*60,_H-10,(Math.random()-.5)*1,(-(0.5+Math.random()*1.5)),1,3+Math.random()*5,10+Math.random()*30);for(let i=pcount-1;i>=0;i--){pvx[i]+=Math.sin(t*.05+py[i]*.03)*.2;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.018;if(plife[i]<=0){removeParticle(i);continue;}const a=plife[i],h=phue[i];fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${h},100%,70%,${a})`);}}}),
+droplet:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.12)addParticle(Math.random()*_W,-5,0,1.5+Math.random()*2,1,3+Math.random()*4,200,0);for(let i=pcount-1;i>=0;i--){py[i]+=pvy[i];plife[i]-=.012;if(plife[i]<=0||py[i]>_H+10){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`rgba(${r},${g},${b},${plife[i]*.8})`);} }}),
+pebble:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;for(let i=0;i<6;i++){const a=i/6*6.2832+t*.003;const d=40+Math.sin(t*.02+i)*8;const x=cx+Math.cos(a)*d,y=cy+Math.sin(a)*d*.5;_ctx.save();_ctx.translate(x,y);_ctx.rotate(a+t*.01);_ctx.fillStyle=`rgba(${r},${g},${b},.6)`;_ctx.fillRect(-4,-4,8,8);_ctx.restore();}if(Math.random()<.04)addParticle(cx+(Math.random()-.5)*80,_H-5,(Math.random()-.5)*.5,-(Math.random()*.4),1,4+Math.random()*4,0);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.02;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`rgba(120,100,80,${plife[i]*.4})`);}}}),
+breeze:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.1)addParticle(-5,_H*.3+Math.random()*_H*.4,3+Math.random()*3,(Math.random()-.5)*.2,1,0,0,0);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i]+Math.sin(t*.04+px[i]*.02)*.3;plife[i]-=.006;if(plife[i]<=0||px[i]>_W+60){removeParticle(i);continue;}const len=30+plife[i]*30;_ctx.beginPath();_ctx.moveTo(px[i],py[i]);_ctx.lineTo(px[i]-len,py[i]);_ctx.strokeStyle=`rgba(${r},${g},${b},${plife[i]*.35})`;_ctx.lineWidth=1;_ctx.stroke();}}}),
+leaf:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.05)addParticle(Math.random()*_W,-10,(Math.random()-.5)*.5,0.8+Math.random()*0.8,1,7+Math.random()*8,100+Math.random()*40);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i]+Math.sin(t*.04+py[i]*.03)*.6;py[i]+=pvy[i];plife[i]-=.006;if(plife[i]<=0||py[i]>_H+20){removeParticle(i);continue;}const h=phue[i],sz=psz[i];_ctx.save();_ctx.translate(px[i],py[i]);_ctx.rotate(t*.03+px[i]*.01);_ctx.beginPath();_ctx.ellipse(0,0,sz*.4,sz,0,0,6.2832);_ctx.fillStyle=`hsla(${h},65%,38%,${plife[i]*.8})`;_ctx.fill();_ctx.restore();}}}),
+spark:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.25){const cx=_W/2,cy=_H/2;const a=Math.random()*6.2832;addParticle(cx,cy,Math.cos(a)*(2+Math.random()*3),Math.sin(a)*(2+Math.random()*3),1,2+Math.random()*3,55+Math.random()*20);}for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];pvy[i]+=.08;plife[i]-=.04;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},100%,80%,${plife[i]})`);}}}),
+frost:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const n=8;for(let i=0;i<n;i++){const a=i/n*6.2832;const d=30+Math.sin(t*.01+i)*5;const x=_W/2+Math.cos(a)*d,y=_H/2+Math.sin(a)*d*.5;const len=15+Math.sin(t*.015+i*1.3)*5;for(let b=0;b<6;b++){const ba=b*1.047;line(x,y,x+Math.cos(ba)*len,y+Math.sin(ba)*len,`rgba(${r},${g},${b},.4)`,1);}}if(Math.random()<.06)addParticle(Math.random()*_W,-5,(Math.random()-.5)*.3,.5+Math.random(),1,5+Math.random()*6,0);for(let i=pcount-1;i>=0;i--){py[i]+=pvy[i]+Math.sin(t*.02+px[i]*.02)*.3;plife[i]-=.006;if(plife[i]<=0||py[i]>_H+10){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`rgba(200,230,255,${plife[i]*.6})`);} }}),
+mud:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(t%30===0)addParticle(_W*.1+Math.random()*_W*.8,_H*.6+Math.random()*_H*.3,0,-(Math.random()*.5),1,4+Math.random()*6,0);for(let i=pcount-1;i>=0;i--){py[i]+=pvy[i];plife[i]-=.015;if(plife[i]<=0){removeParticle(i);continue;}strokeCircle(px[i],py[i],psz[i]*(1-plife[i])*3,`rgba(100,70,40,${plife[i]*.5})`,1.5);}_ctx.fillStyle=`rgba(80,55,30,.08)`;_ctx.fillRect(0,_H*.7,_W,_H*.3);}}),
+smoke:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.08)addParticle(_W/2+(Math.random()-.5)*30,_H-10,(Math.random()-.5)*.4,-(0.4+Math.random()*.6),1,8+Math.random()*12,0);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i]+Math.sin(t*.02+py[i]*.01)*.4;py[i]+=pvy[i];psz[i]+=.08;plife[i]-=.007;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i],`rgba(160,160,160,${plife[i]*.18})`);} }}),
+acorn:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);fillCircle(_W/2,_H/2,18,`rgba(${r},${g},${b},.08)`);for(let i=0;i<5;i++){const a=i/5*6.2832+t*.008;const x=_W/2+Math.cos(a)*50,y=_H/2+Math.sin(a)*25;_ctx.save();_ctx.translate(x,y);_ctx.rotate(a);_ctx.fillStyle=`rgba(${r},${g},${b},.5)`;_ctx.beginPath();_ctx.ellipse(0,0,3,5,0,0,6.2832);_ctx.fill();_ctx.restore();}}}),
+flame:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.3)addParticle(_W/2+(Math.random()-.5)*_W*.4,_H-8,(Math.random()-.5)*1.2,-(1.5+Math.random()*2.5),1,5+Math.random()*8,5+Math.random()*50);for(let i=pcount-1;i>=0;i--){pvx[i]+=Math.sin(t*.06+py[i]*.02)*.4;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.015;if(plife[i]<=0){removeParticle(i);continue;}const h=phue[i],a=plife[i];fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${h},100%,65%,${a})`);} }}),
+wave:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);for(let y=_H*.4;y<_H;y+=18){_ctx.beginPath();for(let x=0;x<=_W;x+=4){const wy=y+Math.sin((x/_W)*6.2832*2+t*.04)*8;x===0?_ctx.moveTo(x,wy):_ctx.lineTo(x,wy);}_ctx.strokeStyle=`rgba(${r},${g},${b},${.08+(y/_H)*.12})`;_ctx.lineWidth=1.5;_ctx.stroke();}if(t%40===0)addParticle(_W/2+(Math.random()-.5)*_W*.5,_H*.5+(Math.random()-.5)*_H*.2,0,0,1,5+Math.random()*20,0);for(let i=pcount-1;i>=0;i--){psz[i]+=1.5;plife[i]-=.018;if(plife[i]<=0){removeParticle(i);continue;}strokeCircle(px[i],py[i],psz[i],`rgba(${r},${g},${b},${plife[i]*.35})`,1.5);} }}),
+granite:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const n=12;for(let i=0;i<n;i++){const a=i/n*6.2832+t*.005;const d=55;const x=_W/2+Math.cos(a)*d,y=_H/2+Math.sin(a)*d*.45;_ctx.save();_ctx.translate(x,y);_ctx.rotate(a);_ctx.fillStyle=`rgba(${r},${g},${b},${.3+Math.sin(t*.02+i)*.1})`;_ctx.fillRect(-4,-3,8,6);_ctx.restore();}fillCircle(_W/2,_H/2,15,`rgba(${r},${g},${b},.12)`);}}),
+thunderclap:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(t%25===0){let x=_W/2+(Math.random()-.5)*40,y=0;_ctx.beginPath();_ctx.moveTo(x,y);for(let s=0;s<8;s++){x+=(Math.random()-.5)*50;y+=_H/8;_ctx.lineTo(x,y);}_ctx.strokeStyle=`rgba(${r},${g},${b},.9)`;_ctx.lineWidth=2;_ctx.stroke();_ctx.strokeStyle=`rgba(255,255,255,.6)`;_ctx.lineWidth=1;_ctx.stroke();}if(Math.random()<.08)addParticle(_W/2+(Math.random()-.5)*_W*.6,Math.random()*_H,(Math.random()-.5)*3,(Math.random()-.5)*3,1,2+Math.random()*3,phue[0]||55);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.05;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`rgba(${r},${g},${b},${plife[i]})`);} }}),
+fern:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const fronds=5;for(let f=0;f<fronds;f++){const bx=_W*.15+f*(_W*.7/fronds);const by=_H-5;const sway=Math.sin(t*.02+f*.8)*.2;_ctx.beginPath();_ctx.moveTo(bx,by);let cx=bx,cy=by;for(let s=0;s<8;s++){cx+=Math.cos(-1.4+sway+s*.1)*12;cy-=12;_ctx.lineTo(cx,cy);if(s>1){line(cx,cy,cx+Math.cos(-1.4+sway+s*.1+1)*10,cy+Math.sin(-1.4+sway+s*.1+1)*10,`rgba(${r},${g},${b},.4)`,1);line(cx,cy,cx+Math.cos(-1.4+sway+s*.1-1)*10,cy+Math.sin(-1.4+sway+s*.1-1)*10,`rgba(${r},${g},${b},.4)`,1);}}_ctx.strokeStyle=`rgba(${r},${g},${b},.6)`;_ctx.lineWidth=1.5;_ctx.stroke();} }}),
+static:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);for(let i=0;i<12;i++){const y=Math.random()*_H;const x=Math.random()*_W;const len=10+Math.random()*40;_ctx.fillStyle=`rgba(${r},${g},${b},${.1+Math.random()*.4})`;_ctx.fillRect(x,y,len,1);}if(Math.random()<.15)addParticle(Math.random()*_W,Math.random()*_H,(Math.random()-.5)*5,(Math.random()-.5)*5,1,2+Math.random()*3,0);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.08;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`rgba(${r},${g},${b},${plife[i]})`);} }}),
+hail:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.15)addParticle(Math.random()*_W,-5,(Math.random()-.5)*1,3+Math.random()*3,1,3+Math.random()*5,0);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.012;if(plife[i]<=0||py[i]>_H+10){removeParticle(i);continue;}_ctx.beginPath();_ctx.ellipse(px[i],py[i],psz[i]*.4,psz[i],0,0,6.2832);_ctx.fillStyle=`rgba(${r},${g},${b},${plife[i]*.8})`;_ctx.fill();} }}),
+cinder:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.12)addParticle(_W/2+(Math.random()-.5)*_W*.5,_H*.7+Math.random()*_H*.2,(Math.random()-.5)*2,-(1+Math.random()*2),1,2+Math.random()*4,25+Math.random()*30);for(let i=pcount-1;i>=0;i--){pvx[i]+=Math.sin(t*.04+py[i]*.02)*.3;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.009;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},100%,75%,${plife[i]*.9})`);} }}),
+fog:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.05)addParticle(Math.random()*_W,_H*.3+Math.random()*_H*.5,(Math.random()-.5)*.3,-(Math.random()*.15),1,20+Math.random()*30,0);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];psz[i]+=.1;plife[i]-=.004;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i],`rgba(${r},${g},${b},${plife[i]*.12})`);} }}),
+quicksand:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.12){const a=Math.random()*6.2832,d=60+Math.random()*30;addParticle(_W/2+Math.cos(a)*d,_H/2+Math.sin(a)*d*.5,-Math.sin(a)*.8,Math.cos(a)*.4,1,2+Math.random()*3,30+Math.random()*20);}for(let i=pcount-1;i>=0;i--){const dx=_W/2-px[i],dy=_H/2-py[i];const d=Math.sqrt(dx*dx+dy*dy)||1;const pull=Math.min(2,40/d);pvx[i]+=dx/d*pull*.08;pvy[i]+=dy/d*pull*.04;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.014;if(plife[i]<=0||d<5){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},60%,45%,${plife[i]*.7})`);} }}),
+vine:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);_ctx.beginPath();for(let s=0;s<80;s++){const prog=s/80;const a=prog*6.2832*2+t*.01;const d=10+prog*50;const x=_W/2+Math.cos(a)*d,y=_H*.6-prog*_H*.5+Math.sin(a)*d*.3;s===0?_ctx.moveTo(x,y):_ctx.lineTo(x,y);}_ctx.strokeStyle=`rgba(${r},${g},${b},.7)`;_ctx.lineWidth=2;_ctx.stroke();for(let i=0;i<6;i++){const prog=(i+.5)/6;const a=prog*6.2832*2+t*.01;const d=10+prog*50;const x=_W/2+Math.cos(a)*d,y=_H*.6-prog*_H*.5+Math.sin(a)*d*.3;_ctx.save();_ctx.translate(x,y);_ctx.rotate(a+1.57);_ctx.beginPath();_ctx.ellipse(0,0,3,6,0,0,6.2832);_ctx.fillStyle=`rgba(${r},${g},${b},.6)`;_ctx.fill();_ctx.restore();} }}),
+sleet:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.18)addParticle(Math.random()*_W+(Math.random()-.5)*20,-5,0.8+Math.random()*.5,2.5+Math.random()*2,1,2+Math.random()*3,0,Math.random()<.5?0:1);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.011;if(plife[i]<=0||py[i]>_H+10){removeParticle(i);continue;}if(ptype[i]===0){line(px[i],py[i],px[i]-pvx[i]*3,py[i]-pvy[i]*3,`rgba(100,140,255,${plife[i]*.6})`,1);}else{fillCircle(px[i],py[i],psz[i]*plife[i],`rgba(${r},${g},${b},${plife[i]*.7})`);}} }}),
+inferno:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.45)addParticle(_W/2+(Math.random()-.5)*_W*.7,_H-5,(Math.random()-.5)*2,-(2+Math.random()*4),1,6+Math.random()*12,Math.random()*60);for(let i=pcount-1;i>=0;i--){pvx[i]+=Math.sin(t*.06+py[i]*.02)*.6;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.014;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},100%,${50+plife[i]*30}%,${plife[i]})`);}  _ctx.fillStyle=`rgba(255,80,0,.04)`;_ctx.fillRect(0,0,_W,_H);}}),
+tsunami:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);for(let layer=0;layer<3;layer++){const speed=(layer+1)*.025;const amp=15+layer*8;const yBase=_H*.4+layer*20;_ctx.beginPath();for(let x=0;x<=_W;x+=3){const y=yBase+Math.sin(x/_W*6.2832*1.5+t*speed)*amp+Math.sin(x/_W*6.2832*3+t*speed*1.3)*amp*.5;x===0?_ctx.moveTo(x,y):_ctx.lineTo(x,y);}_ctx.lineTo(_W,_H);_ctx.lineTo(0,_H);_ctx.closePath();_ctx.fillStyle=`rgba(${r},${g},${b},${.06+layer*.03})`;_ctx.fill();}if(Math.random()<.1)addParticle(Math.random()*_W,_H*.4,(Math.random()-.5)*3,-(1+Math.random()*2),1,2+Math.random()*4,0);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];pvy[i]+=.06;plife[i]-=.025;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`rgba(${r},${g},${b},${plife[i]*.6})`);} }}),
+earthquake:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const shake=Math.sin(t*.3)*2;for(let c=0;c<3;c++){const cx=_W*.2+c*_W*.3+Math.sin(t*.1+c)*5;_ctx.beginPath();_ctx.moveTo(cx+shake,_H);let x=cx+shake,y=_H;for(let s=0;s<6;s++){x+=(Math.random()-.5)*20+shake;y-=_H*.14;_ctx.lineTo(x,y);}_ctx.strokeStyle=`rgba(${r},${g},${b},.4)`;_ctx.lineWidth=2;_ctx.stroke();}if(Math.random()<.06)addParticle(Math.random()*_W,_H-5+(shake),(Math.random()-.5)*2,-(1+Math.random()*2),1,3+Math.random()*6,25+Math.random()*10);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.018;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},50%,40%,${plife[i]*.7})`);} }}),
+hurricane:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);for(let arm=0;arm<3;arm++){_ctx.beginPath();for(let s=0;s<60;s++){const a=s*.15+arm*2.09+t*.025;const d=s*.9;const x=_W/2+Math.cos(a)*d,y=_H/2+Math.sin(a)*d*.5;s===0?_ctx.moveTo(x,y):_ctx.lineTo(x,y);}_ctx.strokeStyle=`rgba(${r},${g},${b},.25)`;_ctx.lineWidth=2;_ctx.stroke();}if(Math.random()<.1){const a=Math.random()*6.2832,d=20+Math.random()*60;addParticle(_W/2+Math.cos(a)*d,_H/2+Math.sin(a)*d*.5,-Math.sin(a)*(2+Math.random()*2),Math.cos(a)*(2+Math.random()*2)*.5,1,2+Math.random()*3,0);}for(let i=pcount-1;i>=0;i--){const dx=_W/2-px[i],dy=(_H/2-py[i])*2;const d=Math.sqrt(dx*dx+dy*dy)||1;pvx[i]+=(dy/d*1.2-pvx[i]*.05);pvy[i]+=(-dx/d*.6-pvy[i]*.05);px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.012;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`rgba(${r},${g},${b},${plife[i]*.5})`);} }}),
+ancientGrove:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const trees=[[_W*.15,_H,30,70],[_W*.4,_H,25,90],[_W*.65,_H,35,80],[_W*.88,_H,20,55]];trees.forEach(([tx,ty,w,h])=>{const sway=Math.sin(t*.01+(tx/_W)*3)*.015;_ctx.save();_ctx.translate(tx,ty);_ctx.rotate(sway);_ctx.fillStyle=`rgba(${r},${g},${b},.15)`;_ctx.beginPath();_ctx.moveTo(0,0);_ctx.lineTo(-w/2,-h);_ctx.lineTo(w/2,-h);_ctx.closePath();_ctx.fill();_ctx.fillRect(-4,0,8,-h*.3);_ctx.restore();});if(Math.random()<.04)addParticle(Math.random()*_W,-5,(Math.random()-.5)*.5,.5+Math.random()*.5,1,5+Math.random()*7,100+Math.random()*50);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i]+Math.sin(t*.03+py[i]*.02)*.4;py[i]+=pvy[i];plife[i]-=.005;if(plife[i]<=0||py[i]>_H){removeParticle(i);continue;}_ctx.save();_ctx.translate(px[i],py[i]);_ctx.rotate(t*.04+px[i]*.01);_ctx.beginPath();_ctx.ellipse(0,0,psz[i]*.4,psz[i],0,0,6.2832);_ctx.fillStyle=`hsla(${phue[i]},65%,35%,${plife[i]*.7})`;_ctx.fill();_ctx.restore();} }}),
+lightning:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(t%15===0){for(let bolt=0;bolt<2;bolt++){let x=_W*.3+bolt*_W*.4+(Math.random()-.5)*30,y=0;_ctx.beginPath();_ctx.moveTo(x,y);for(let s=0;s<10;s++){x+=(Math.random()-.5)*60;y+=_H/10;_ctx.lineTo(x,y);}_ctx.strokeStyle=`rgba(${r},${g},${b},${.6+Math.random()*.4})`;_ctx.lineWidth=2+Math.random()*2;_ctx.stroke();_ctx.strokeStyle=`rgba(255,255,255,.8)`;_ctx.lineWidth=1;_ctx.stroke();}_ctx.fillStyle=`rgba(${r},${g},${b},.06)`;_ctx.fillRect(0,0,_W,_H);}if(Math.random()<.12)addParticle(_W/2+(Math.random()-.5)*_W*.5,Math.random()*_H,(Math.random()-.5)*4,(Math.random()-.5)*4,1,2+Math.random()*3,0);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.05;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`rgba(${r},${g},${b},${plife[i]})`);} }}),
+blizzard:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.2)addParticle(Math.random()*_W+(Math.random()-.5)*40,-5,1+Math.random()*2,1.5+Math.random()*2.5,1,3+Math.random()*5,0);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i]+Math.sin(t*.05+py[i]*.02)*.8;py[i]+=pvy[i];plife[i]-=.009;if(plife[i]<=0||py[i]>_H+10){removeParticle(i);continue;}_ctx.save();_ctx.translate(px[i],py[i]);_ctx.rotate(t*.03+px[i]*.02);for(let a=0;a<6;a++){const ba=a*1.047;line(0,0,Math.cos(ba)*psz[i],Math.sin(ba)*psz[i],`rgba(${r},${g},${b},${plife[i]*.7})`,1);}_ctx.restore();} }}),
+lavaFlow:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);for(let row=0;row<4;row++){const yBase=_H*.4+row*(_H*.15);_ctx.beginPath();for(let x=0;x<=_W;x+=4){const y=yBase+Math.sin(x*.02+t*.02+row)*10;x===0?_ctx.moveTo(x,y):_ctx.lineTo(x,y);}_ctx.strokeStyle=`rgba(${r},${g},${b},${.1+row*.05})`;_ctx.lineWidth=4+row*2;_ctx.stroke();}if(t%20===0)addParticle(_W*.1+Math.random()*_W*.8,_H*.6+Math.random()*_H*.3,0,-(0.5+Math.random()*.5),1,4+Math.random()*8,10+Math.random()*30);for(let i=pcount-1;i>=0;i--){py[i]+=pvy[i];plife[i]-=.02;if(plife[i]<=0){removeParticle(i);continue;}strokeCircle(px[i],py[i],psz[i]*(1.2-plife[i]),`hsla(${phue[i]},100%,60%,${plife[i]*.5})`,1.5);} }}),
+aurora:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);for(let band=0;band<5;band++){_ctx.beginPath();for(let x=0;x<=_W;x+=6){const y=_H*.2+Math.sin(x*.008+t*.015+band*.6)*40+Math.sin(x*.02+t*.01)*15;x===0?_ctx.moveTo(x,y):_ctx.lineTo(x,y);}_ctx.lineTo(_W,_H*.5+band*10);_ctx.lineTo(0,_H*.5+band*10);_ctx.closePath();const hShift=band*25;_ctx.fillStyle=`hsla(${(160+hShift+t*.5)%360},80%,60%,${.05+band*.012})`;_ctx.fill();}if(Math.random()<.04)addParticle(Math.random()*_W,_H*.1+Math.random()*_H*.4,0,Math.random()*.2,1,2+Math.random()*3,160+Math.random()*80);for(let i=pcount-1;i>=0;i--){py[i]+=pvy[i];plife[i]-=.008;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},90%,80%,${plife[i]*.5})`);} }}),
+shadow:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const n=5;for(let i=0;i<n;i++){const phase=i/n*6.2832;_ctx.beginPath();let x=_W/2,y=_H/2;_ctx.moveTo(x,y);for(let s=1;s<=10;s++){const a=phase+Math.sin(t*.02+s*.4)*0.8+t*.005;const d=s*10;x=_W/2+Math.cos(a)*d;y=_H/2+Math.sin(a)*d*.5;_ctx.lineTo(x,y);}_ctx.strokeStyle=`rgba(${r},${g},${b},${.2+Math.sin(t*.03+i)*.1})`;_ctx.lineWidth=3;_ctx.stroke();}fillCircle(_W/2,_H/2,15,`rgba(${r},${g},${b},.15)`);}}),
+sandstorm:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.2)addParticle(-5,_H*.2+Math.random()*_H*.6,4+Math.random()*5,(Math.random()-.5)*.5,1,1+Math.random()*3,25+Math.random()*15);for(let i=pcount-1;i>=0;i--){py[i]+=pvy[i]+Math.sin(t*.04+py[i]*.02)*.5;px[i]+=pvx[i];plife[i]-=.007;if(plife[i]<=0||px[i]>_W+20){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},50%,55%,${plife[i]*.6})`);}  _ctx.fillStyle=`rgba(200,150,60,.03)`;_ctx.fillRect(0,0,_W,_H);}}),
+crystalRain:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.1)addParticle(Math.random()*_W,-5,(Math.random()-.5)*.5,2+Math.random()*3,1,4+Math.random()*7,0);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.011;if(plife[i]<=0||py[i]>_H){removeParticle(i);continue;}const s=psz[i]*plife[i];_ctx.save();_ctx.translate(px[i],py[i]);_ctx.rotate(.785);_ctx.fillStyle=`rgba(${r},${g},${b},${plife[i]*.7})`;_ctx.fillRect(-s/2,-s/2,s,s);_ctx.restore();} }}),
+voidMist:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.06)addParticle(Math.random()*_W,Math.random()*_H,(Math.random()-.5)*.2,(Math.random()-.5)*.2,1,15+Math.random()*25,0);const cx=_W/2,cy=_H/2;for(let i=pcount-1;i>=0;i--){const dx=cx-px[i],dy=cy-py[i];const d=Math.sqrt(dx*dx+dy*dy)||1;px[i]+=pvx[i]+dx/d*.2;py[i]+=pvy[i]+dy/d*.1;psz[i]+=.04;plife[i]-=.005;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i],`rgba(${r},${g},${b},${plife[i]*.1})`);} }}),
+volcano:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);_ctx.beginPath();_ctx.moveTo(0,_H);_ctx.lineTo(_W/2,_H*.25);_ctx.lineTo(_W,_H);_ctx.closePath();_ctx.fillStyle=`rgba(${r},${g},${b},.12)`;_ctx.fill();if(Math.random()<.08){const spd=3+Math.random()*4,a=(-1.2+(Math.random()-.5)*.8);addParticle(_W/2,_H*.25,Math.cos(a)*spd,Math.sin(a)*spd,1,4+Math.random()*8,15+Math.random()*30);}for(let i=pcount-1;i>=0;i--){pvy[i]+=.12;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.012;if(plife[i]<=0||py[i]>_H){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},100%,55%,${plife[i]})`);if(plife[i]>.3)fillCircle(px[i]-pvx[i],py[i]-pvy[i],psz[i]*plife[i]*.5,`hsla(${phue[i]+20},100%,40%,${plife[i]*.5})`);} }}),
+typhoon:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);for(let ring=1;ring<=6;ring++){const rad=ring*12;const alpha=.06+ring*.02;strokeCircle(_W/2,_H/2,rad+Math.sin(t*.03+ring)*3,`rgba(${r},${g},${b},${alpha})`,1.5+ring*.3);}if(Math.random()<.14){const a=Math.random()*6.2832,d=10+Math.random()*40;addParticle(_W/2+Math.cos(a)*d,_H/2+Math.sin(a)*d*.5,-Math.sin(a)*(3+Math.random()*3),Math.cos(a)*(3+Math.random()*3)*.5,1,2+Math.random()*3,0);}for(let i=pcount-1;i>=0;i--){const dx=_W/2-px[i],dy=(_H/2-py[i])*2;const d=Math.sqrt(dx*dx+dy*dy)||1;pvx[i]+=(dy/d*1.5-pvx[i]*.06);pvy[i]+=(-dx/d*.75-pvy[i]*.06);px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.015;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`rgba(${r},${g},${b},${plife[i]*.5})`);} }}),
+meteorShower:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.1)addParticle(Math.random()*_W,-5,1+Math.random()*2,3+Math.random()*4,1,3+Math.random()*5,25+Math.random()*20);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.012;if(plife[i]<=0||py[i]>_H){removeParticle(i);continue;}const h=phue[i],sz=psz[i]*plife[i];fillCircle(px[i],py[i],sz,`hsla(${h},100%,70%,${plife[i]})`);for(let tr=1;tr<=5;tr++){fillCircle(px[i]-pvx[i]*tr,py[i]-pvy[i]*tr,sz*(1-tr*.18),`hsla(${h+tr*5},100%,50%,${plife[i]*(1-tr*.18)})`);}}if(t%3===0)fillCircle(Math.random()*_W,Math.random()*_H,Math.random()*1.5,`rgba(255,255,255,.1)`);}}),
+eclipse:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;for(let i=0;i<16;i++){const a=i/16*6.2832+t*.004;const d1=28,d2=45+Math.sin(t*.05+i*1.1)*15;line(cx+Math.cos(a)*d1,cy+Math.sin(a)*d1*.5,cx+Math.cos(a)*d2,cy+Math.sin(a)*d2*.5,`rgba(251,191,36,${.15+Math.sin(t*.05+i)*.05})`,2);}fillCircle(cx,cy,26,`rgba(0,0,0,.9)`);strokeCircle(cx,cy,26,`rgba(251,191,36,.3)`,2);for(let ring=1;ring<=3;ring++){strokeCircle(cx,cy,26+ring*12,`rgba(${r},${g},${b},${.08-ring*.02})`,ring*2);}}}),
+prism:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;for(let i=0;i<7;i++){const a=(i/7)*6.2832+t*.008;const hue=i*51;_ctx.beginPath();_ctx.moveTo(cx,cy);_ctx.lineTo(cx+Math.cos(a)*_W,cy+Math.sin(a)*_W*.5);_ctx.strokeStyle=`hsla(${hue},100%,60%,.12)`;_ctx.lineWidth=8;_ctx.stroke();}_ctx.save();_ctx.translate(cx,cy);_ctx.rotate(t*.01);_ctx.beginPath();for(let i=0;i<3;i++){const a=i/3*6.2832-1.57;_ctx.lineTo(Math.cos(a)*18,Math.sin(a)*18);}_ctx.closePath();_ctx.strokeStyle=`rgba(255,255,255,.4)`;_ctx.lineWidth=2;_ctx.stroke();_ctx.restore();if(Math.random()<.12){const a=Math.random()*6.2832,d=20+Math.random()*50;addParticle(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,(Math.random()-.5)*.5,(Math.random()-.5)*.5,1,2+Math.random()*3,Math.random()*360);}for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.02;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},100%,75%,${plife[i]})`);} }}),
+phoenix:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H*.45;for(let side=-1;side<=1;side+=2){_ctx.beginPath();const oa=side*(.8+Math.sin(t*.03)*.15);for(let s=0;s<20;s++){const a=oa+side*(s/20)*.5;const d=30+s*3;const x=cx+Math.cos(a)*d,y=cy+Math.sin(a)*d*.6;s===0?_ctx.moveTo(x,y):_ctx.lineTo(x,y);}_ctx.strokeStyle=`rgba(${r},${g},${b},.5)`;_ctx.lineWidth=3;_ctx.stroke();}fillCircle(cx,cy,10,`rgba(255,220,100,.5)`);if(Math.random()<.2){const side=Math.random()<.5?-1:1;addParticle(cx+side*(20+Math.random()*30),cy+Math.random()*20,side*(Math.random()+.5),-(1+Math.random()*2),1,3+Math.random()*5,10+Math.random()*40);}for(let i=pcount-1;i>=0;i--){pvx[i]*=.97;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.018;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},100%,65%,${plife[i]})`);} }}),
+dragonScale:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const rows=5,cols=7;for(let row=0;row<rows;row++){for(let col=0;col<cols;col++){const ox=col%2===0?0:_W/(cols*2);const x=col*(_W/cols)+ox,y=_H*.2+row*(_H*.55/rows);const pulse=Math.sin(t*.02+row*.8+col*.5)*.1;_ctx.beginPath();_ctx.ellipse(x,y,_W/(cols*2)-.5,_H*.55/(rows*2)-.5,0,Math.PI,0);_ctx.fillStyle=`rgba(${r},${g},${b},${.08+pulse})`;_ctx.fill();_ctx.strokeStyle=`rgba(${r},${g},${b},.2)`;_ctx.lineWidth=.5;_ctx.stroke();}}if(Math.random()<.06)addParticle(Math.random()*_W,_H*.2+Math.random()*_H*.55,0,-(1+Math.random()),1,3+Math.random()*5,10+Math.random()*30);for(let i=pcount-1;i>=0;i--){py[i]+=pvy[i];plife[i]-=.02;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},100%,55%,${plife[i]})`);} }}),
+serpent:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);_ctx.beginPath();for(let s=0;s<=50;s++){const prog=s/50;const x=_W*.1+prog*_W*.8;const y=_H/2+Math.sin(prog*6.2832*1.5+t*.04)*(_H*.2);s===0?_ctx.moveTo(x,y):_ctx.lineTo(x,y);}_ctx.strokeStyle=`rgba(${r},${g},${b},.6)`;_ctx.lineWidth=8;_ctx.lineCap='round';_ctx.stroke();_ctx.strokeStyle=`rgba(${r},${g},${b},.2)`;_ctx.lineWidth=14;_ctx.stroke();const hx=_W*.9,hy=_H/2+Math.sin(6.2832*1.5+t*.04)*(_H*.2);fillCircle(hx,hy,8,`rgba(${r},${g},${b},.8)`);}}),
+amethyst:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;const facets=8;for(let i=0;i<facets;i++){const a=i/facets*6.2832+t*.005;const a2=(i+.5)/facets*6.2832+t*.005;const d=35,d2=20;_ctx.beginPath();_ctx.moveTo(cx,cy-10);_ctx.lineTo(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5);_ctx.lineTo(cx+Math.cos(a2)*d2,cy+Math.sin(a2)*d2*.5);_ctx.closePath();_ctx.fillStyle=`rgba(${r},${g},${b},${.06+Math.sin(t*.04+i)*.03})`;_ctx.fill();_ctx.strokeStyle=`rgba(${r},${g},${b},.3)`;_ctx.lineWidth=.5;_ctx.stroke();}if(Math.random()<.1){addParticle(cx+(Math.random()-.5)*40,cy+(Math.random()-.5)*30,0,0,1,2+Math.random()*3,280+Math.random()*40);}for(let i=pcount-1;i>=0;i--){plife[i]-=.03;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},80%,80%,${plife[i]})`);} }}),
+abyss:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;for(let i=8;i>=1;i--){const pulse=Math.sin(t*.02+i*.4)*.05;fillCircle(cx,cy,i*12,`rgba(${r},${g},${b},${(.02+pulse)*i*.015})`);strokeCircle(cx,cy,i*12,`rgba(${r},${g},${b},${.08-i*.005})`,1);}if(Math.random()<.15){const a=Math.random()*6.2832,d=60+Math.random()*30;addParticle(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,0,0,1,2+Math.random()*3,0);}for(let i=pcount-1;i>=0;i--){const dx=cx-px[i],dy=cy-py[i];const d=Math.sqrt(dx*dx+dy*dy)||1;const pull=Math.min(4,50/d);pvx[i]+=dx/d*pull*.06;pvy[i]+=dy/d*pull*.04;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.01;if(plife[i]<=0||d<8){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`rgba(${r},${g},${b},${plife[i]*.7})`);} }}),
+cursedFlame:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.25)addParticle(_W/2+(Math.random()-.5)*_W*.4,_H-8,(Math.random()-.5)*1,-(1.5+Math.random()*2),1,4+Math.random()*9,260+Math.random()*60);for(let i=pcount-1;i>=0;i--){pvx[i]+=Math.sin(t*.07+py[i]*.03)*.3;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.016;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},90%,45%,${plife[i]})`);} }}),
+timeFragment:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;strokeCircle(cx,cy,40,`rgba(${r},${g},${b},.3)`,1.5);[t*.003,t*.007,-t*.002,t*.015].forEach((angle,i)=>{const len=10+i*8;const a=angle-1.57;_ctx.save();_ctx.translate(cx,cy);_ctx.setLineDash([3,3]);line(0,0,Math.cos(a)*len,Math.sin(a)*len,`rgba(${r},${g},${b},${.4-i*.08})`,1.5-i*.2);_ctx.setLineDash([]);_ctx.restore();});for(let i=0;i<6;i++){const a=i/6*6.2832+t*.02;const d=50+Math.sin(t*.03+i)*5;const x=cx+Math.cos(a)*d,y=cy+Math.sin(a)*d*.5;_ctx.save();_ctx.translate(x,y);_ctx.rotate(a+t*.04);_ctx.fillStyle=`rgba(${r},${g},${b},.4)`;_ctx.fillRect(-3,-2,6,4);_ctx.restore();} }}),
+soulShard:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.04)addParticle(_W*.2+Math.random()*_W*.6,_H+10,(Math.random()-.5)*.5,-(0.6+Math.random()),1,8+Math.random()*14,270+Math.random()*40);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i]+Math.sin(t*.04+px[i]*.02)*1;py[i]+=pvy[i];plife[i]-=.006;if(plife[i]<=0||py[i]<-20){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*.4,`hsla(${phue[i]},70%,80%,${plife[i]*.8})`);fillCircle(px[i],py[i],psz[i],`hsla(${phue[i]},70%,60%,${plife[i]*.15})`);} }}),
+solarFlare:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;for(let i=0;i<20;i++){const a=i/20*6.2832+t*.002;const len=25+Math.sin(t*.05+i*1.3)*20;line(cx+Math.cos(a)*25,cy+Math.sin(a)*25*.5,cx+Math.cos(a)*(25+len),cy+Math.sin(a)*(25+len)*.5,`rgba(255,200,50,${.15+Math.sin(t*.04+i)*.05})`,2);}fillCircle(cx,cy,24,`rgba(255,220,80,.7)`);fillCircle(cx,cy,18,`rgba(255,255,200,.9)`);if(Math.random()<.08){const a=Math.random()*6.2832;addParticle(cx+Math.cos(a)*24,cy+Math.sin(a)*24*.5,Math.cos(a)*(2+Math.random()*4),Math.sin(a)*(2+Math.random()*4)*.5,1,3+Math.random()*6,30+Math.random()*30);}for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.018;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},100%,70%,${plife[i]})`);} }}),
+blackHole:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;for(let ring=1;ring<=5;ring++){const rad=ring*12+Math.sin(t*.02+ring)*.5;const hue=ring*15;strokeCircle(cx,cy,rad,`hsla(${hue+20},100%,60%,${.1+ring*.03})`,ring*.8);}fillCircle(cx,cy,20,`rgba(0,0,0,.98)`);strokeCircle(cx,cy,20,`rgba(255,100,0,.3)`,2);if(Math.random()<.18){const a=Math.random()*6.2832,d=55+Math.random()*25;addParticle(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,0,0,1,2+Math.random()*3,0+Math.random()*60);}for(let i=pcount-1;i>=0;i--){const dx=cx-px[i],dy=cy-py[i];const d=Math.sqrt(dx*dx+dy*dy)||1;if(d<22){removeParticle(i);continue;}const pull=Math.min(6,120/d);pvx[i]+=dx/d*pull*.06;pvy[i]+=dy/d*pull*.04;pvx[i]+=(-dy/d)*pull*.03;pvy[i]+=(dx/d)*pull*.015;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.006;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},90%,65%,${plife[i]*.8})`);} }}),
+nebula:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const clouds=[[_W*.3,_H*.4,50,200+t*.1],[_W*.6,_H*.6,40,280+t*.08],[_W*.5,_H*.3,60,130+t*.12],[_W*.2,_H*.7,35,320+t*.06]];clouds.forEach(([x,y,rad,hue])=>{fillCircle(x,y,rad,`hsla(${hue%360},60%,50%,.06)`);});if(t%4===0){addParticle(Math.random()*_W,Math.random()*_H,0,0,1,1+Math.random()*1.5,Math.random()*360);}for(let i=pcount-1;i>=0;i--){plife[i]-=.003;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*(0.5+0.5*Math.sin(t*.05+i)),`hsla(${phue[i]},80%,90%,${plife[i]*.7})`);} }}),
+supernova:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;const phase=(t%180)/180;for(let wave=0;wave<4;wave++){const p=(phase+wave*.25)%1;strokeCircle(cx,cy,p*_W*.6,`rgba(${r},${g},${b},${(1-p)*.3})`,3*(1-p));}const bright=Math.max(0,1-phase*3);if(bright>0)fillCircle(cx,cy,20*bright+5,`rgba(255,255,200,${bright*.6})`);if(Math.random()<.15){const a=Math.random()*6.2832;addParticle(cx,cy,Math.cos(a)*(3+Math.random()*4),Math.sin(a)*(3+Math.random()*4)*.5,1,3+Math.random()*6,30+Math.random()*40);}for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.012;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},100%,70%,${plife[i]})`);} }}),
+ancientVoid:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.05){const a=Math.random()*6.2832,d=40+Math.random()*30;addParticle(_W/2+Math.cos(a)*d,_H/2+Math.sin(a)*d*.5,(Math.random()-.5)*.2,(Math.random()-.5)*.1,1,10+Math.random()*20,0);}for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];psz[i]+=.03;plife[i]-=.003;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i],`rgba(${r},${g},${b},${plife[i]*.06})`);}  _ctx.save();_ctx.font=`${14+Math.sin(t*.02)*2}px serif`;_ctx.fillStyle=`rgba(${r},${g},${b},.12)`;['✦','✧','⋆'].forEach((sym,i)=>{const a=i/3*6.2832+t*.005;const d=50;_ctx.fillText(sym,_W/2+Math.cos(a)*d-6,_H/2+Math.sin(a)*d*.5+5);});_ctx.restore();}}),
+timeRift:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;_ctx.beginPath();_ctx.moveTo(cx,0);let x=cx,y=0;for(let s=0;s<12;s++){x+=(Math.random()-.5)*30*(Math.sin(t*.03+s)*.3+.7);y+=_H/12;_ctx.lineTo(x,y);}_ctx.strokeStyle=`rgba(${r},${g},${b},.8)`;_ctx.lineWidth=3;_ctx.stroke();_ctx.strokeStyle=`rgba(255,255,255,.5)`;_ctx.lineWidth=1;_ctx.stroke();if(Math.random()<.08)addParticle(cx+(Math.random()-.5)*30,Math.random()*_H,(Math.random()-.5)*1.5,(Math.random()-.5)*1.5,1,3+Math.random()*5,Math.random()*360);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.015;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},70%,70%,${plife[i]*.7})`);} }}),
+infinityLoop:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;for(let trail=0;trail<3;trail++){const offset=trail*.2;_ctx.beginPath();for(let s=0;s<=60;s++){const theta=s/60*6.2832+t*.015+offset;const denom=1+Math.sin(theta)*Math.sin(theta);const x=cx+Math.cos(theta)*55/denom;const y=cy+Math.sin(theta)*Math.cos(theta)*30/denom;s===0?_ctx.moveTo(x,y):_ctx.lineTo(x,y);}_ctx.closePath();_ctx.strokeStyle=`rgba(${r},${g},${b},${.5-trail*.12})`;_ctx.lineWidth=2-trail*.4;_ctx.stroke();}{const theta=t*.015;const denom=1+Math.sin(theta)*Math.sin(theta);const x=cx+Math.cos(theta)*55/denom;const y=cy+Math.sin(theta)*Math.cos(theta)*30/denom;fillCircle(x,y,5,`rgba(${r},${g},${b},.9)`);}}}),
+darkGalaxy:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);for(let arm=0;arm<2;arm++){const armOffset=arm*3.14;for(let s=0;s<80;s++){const a=s*.18+armOffset+t*.006;const d=s*1.1;const x=_W/2+Math.cos(a)*d,y=_H/2+Math.sin(a)*d*.45;if(x<0||x>_W||y<0||y>_H)continue;const alpha=Math.max(0,.15-d/800);fillCircle(x,y,1.5,`rgba(${r},${g},${b},${alpha+Math.random()*.02})`);}}if(t%5===0){const a=Math.random()*6.2832,d=Math.random()*60;fillCircle(_W/2+Math.cos(a)*d,_H/2+Math.sin(a)*d*.45,1,`rgba(255,255,255,.5)`);}}}),
+darkMatter:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cols=10,rows=6;for(let row=0;row<=rows;row++){for(let col=0;col<=cols;col++){const gx=col/cols*_W,gy=row/rows*_H;const dx=gx-_W/2,dy=gy-_H/2;const d=Math.sqrt(dx*dx+dy*dy)||1;const distort=800/(d+20);const ex=gx+dx/d*distort*(Math.sin(t*.015+d*.02))*.15;const ey=gy+dy/d*distort*(Math.cos(t*.015+d*.02))*.1;fillCircle(ex,ey,1,`rgba(${r},${g},${b},${.12+Math.random()*.04})`);}}}}),
+cometStorm:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.12){const side=Math.random()<.5?-1:1;const y=Math.random()*_H;addParticle(side===1?-10:_W+10,y,side*(4+Math.random()*5),(Math.random()-.5)*2,1,4+Math.random()*6,30+Math.random()*30);}for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.01;if(plife[i]<=0||px[i]<-20||px[i]>_W+20){removeParticle(i);continue;}const trail=6;for(let tr=0;tr<trail;tr++){fillCircle(px[i]-pvx[i]*tr,py[i]-pvy[i]*tr,psz[i]*(1-tr/trail)*plife[i],`hsla(${phue[i]},100%,65%,${plife[i]*(1-tr/trail)*.7})`);}} }}),
+forgottenGod:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;for(let ring=4;ring>=1;ring--){const rad=ring*15;const alpha=.04+Math.sin(t*.008+ring)*.01;strokeCircle(cx,cy,rad,`rgba(${r},${g},${b},${alpha})`,ring*1.5);}_ctx.beginPath();_ctx.ellipse(cx,cy,22,14,0,0,6.2832);_ctx.strokeStyle=`rgba(${r},${g},${b},.25)`;_ctx.lineWidth=2;_ctx.stroke();fillCircle(cx,cy,8,`rgba(${r},${g},${b},.2)`);if(Math.random()<.03)addParticle(cx+(Math.random()-.5)*60,cy+(Math.random()-.5)*40,(Math.random()-.5)*.5,(Math.random()-.5)*.3,1,3+Math.random()*5,25+Math.random()*10);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.008;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},40%,40%,${plife[i]*.5})`);} }}),
+deathsTouch:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const n=6;for(let i=0;i<n;i++){const baseAngle=i/n*6.2832+t*.003;_ctx.beginPath();let x=_W/2,y=_H/2;_ctx.moveTo(x,y);for(let s=0;s<12;s++){const a=baseAngle+Math.sin(t*.02+s*.5)*0.4;x+=Math.cos(a)*8;y+=Math.sin(a)*5;_ctx.lineTo(x,y);}_ctx.strokeStyle=`rgba(${r},${g},${b},${.2+Math.sin(t*.04+i)*.05})`;_ctx.lineWidth=2;_ctx.stroke();}if(Math.random()<.07)addParticle(Math.random()*_W,Math.random()*_H,(Math.random()-.5)*.3,(Math.random()-.5)*.2,1,3+Math.random()*5,0);for(let i=pcount-1;i>=0;i--){psz[i]-=.02;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.008;if(plife[i]<=0||psz[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`rgba(${r},${g},${b},${plife[i]*.5})`);} }}),
+singularity:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;if(Math.random()<.15){const a=Math.random()*6.2832,d=55+Math.random()*20;addParticle(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,0,0,1,2+Math.random()*4,280+Math.random()*40);}for(let i=pcount-1;i>=0;i--){const dx=cx-px[i],dy=cy-py[i];const d=Math.sqrt(dx*dx+dy*dy)||1;if(d<10){removeParticle(i);continue;}const pull=Math.min(6,100/d);pvx[i]+=dx/d*pull*.07;pvy[i]+=dy/d*pull*.04;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.009;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},70%,70%,${plife[i]*.8})`);}const pulse=.5+.5*Math.sin(t*.08);fillCircle(cx,cy,6+pulse*8,`rgba(255,255,255,${.6*pulse})`);fillCircle(cx,cy,4,`rgba(${r},${g},${b},.9)`);for(let ring=1;ring<=3;ring++){strokeCircle(cx,cy,ring*20*pulse,`rgba(${r},${g},${b},${.2/ring})`,1);}}}),
+antimatter:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;if(Math.random()<.06){const x=cx+(Math.random()-.5)*_W*.6,y=cy+(Math.random()-.5)*_H*.6;addParticle(x,y,0,0,1,8+Math.random()*12,180+Math.random()*60);}for(let i=pcount-1;i>=0;i--){plife[i]-=.05;if(plife[i]<=0){removeParticle(i);continue;}for(let j=0;j<4;j++){const a=j*1.57;line(px[i],py[i],px[i]+Math.cos(a)*psz[i]*plife[i],py[i]+Math.sin(a)*psz[i]*plife[i]*.5,`hsla(${phue[i]},100%,70%,${plife[i]})`,2);}fillCircle(px[i],py[i],4*plife[i],`rgba(255,255,255,${plife[i]*.5})`);}for(let ring=1;ring<=4;ring++){const phase=t*.02*ring;strokeCircle(cx,cy,ring*15,`rgba(${r},${g},${b},${.08+Math.sin(phase)*.03})`,1.5);strokeCircle(cx,cy,ring*15+1,`rgba(255,255,255,${.03+Math.sin(phase+3.14)*.02})`,1);}}}),
+quasar:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;for(let dir=-1;dir<=1;dir+=2){_ctx.beginPath();for(let s=0;s<=30;s++){const progress=s/30;const width=progress*20;const y=cy+dir*progress*_H*.45;const wobble=Math.sin(t*.02+progress*4)*(width*.3);s===0?_ctx.moveTo(cx+wobble,y):_ctx.lineTo(cx+wobble,y);}_ctx.strokeStyle=`rgba(${r},${g},${b},.3)`;_ctx.lineWidth=8;_ctx.stroke();}fillCircle(cx,cy,14,`rgba(${r},${g},${b},.6)`);fillCircle(cx,cy,8,`rgba(255,255,255,.8)`);_ctx.save();_ctx.scale(1,.35);strokeCircle(cx,cy/.35,50,`rgba(${r},${g},${b},.2)`,6);_ctx.restore();if(Math.random()<.06)addParticle(cx+(Math.random()-.5)*10,cy,(Math.random()-.5)*1.5,(Math.random()<.5?-1:1)*(2+Math.random()*3),1,2+Math.random()*3,200+Math.random()*60);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.018;if(plife[i]<=0||Math.abs(py[i]-cy)>_H*.55){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`rgba(${r},${g},${b},${plife[i]*.6})`);} }}),
+pulsar:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;for(let beam=0;beam<2;beam++){const a=t*.06+beam*3.14;_ctx.save();_ctx.translate(cx,cy);_ctx.rotate(a);_ctx.beginPath();_ctx.moveTo(0,0);_ctx.lineTo(_W,0);_ctx.strokeStyle=`rgba(${r},${g},${b},.4)`;_ctx.lineWidth=4;_ctx.stroke();_ctx.beginPath();_ctx.moveTo(0,0);_ctx.lineTo(-_W,0);_ctx.strokeStyle=`rgba(${r},${g},${b},.15)`;_ctx.lineWidth=2;_ctx.stroke();_ctx.restore();}fillCircle(cx,cy,10,`rgba(255,255,255,.9)`);fillCircle(cx,cy,14,`rgba(${r},${g},${b},.2)`);if(t%30===0)addParticle(cx,cy,0,0,1,0,0);for(let i=pcount-1;i>=0;i--){psz[i]+=3;plife[i]-=.03;if(plife[i]<=0){removeParticle(i);continue;}strokeCircle(px[i],py[i],psz[i],`rgba(${r},${g},${b},${plife[i]*.3})`,2);} }}),
+neutronStar:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;fillCircle(cx,cy,8,`rgba(255,255,255,.95)`);for(let i=0;i<16;i++){const a=i/16*6.2832;_ctx.beginPath();for(let d=10;d<=80;d+=3){const lens=400/(d*d+1);const x=cx+Math.cos(a+lens)*d;const y=cy+Math.sin(a+lens)*d*.5;d===10?_ctx.moveTo(x,y):_ctx.lineTo(x,y);}_ctx.strokeStyle=`rgba(${r},${g},${b},${.04+Math.sin(t*.02+i)*.01})`;_ctx.lineWidth=.5;_ctx.stroke();}if(Math.random()<.1){const a=Math.random()*6.2832,d=50+Math.random()*20;addParticle(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,0,0,1,1+Math.random()*3,200+Math.random()*160);}for(let i=pcount-1;i>=0;i--){const dx=cx-px[i],dy=cy-py[i];const d=Math.sqrt(dx*dx+dy*dy)||1;if(d<10){removeParticle(i);continue;}const pull=Math.min(8,150/d);pvx[i]+=dx/d*pull*.08;pvy[i]+=dy/d*pull*.04;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.01;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},80%,75%,${plife[i]*.7})`);} }}),
+wormhole:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;for(let ring=8;ring>=1;ring--){const scale=ring/8;const rad=scale*55;const offX=Math.sin(t*.012)*(1-scale)*20;const offY=Math.cos(t*.008)*(1-scale)*10;strokeCircle(cx+offX,cy+offY,rad,`rgba(${r},${g},${b},${.08+scale*.08})`,1.5+scale*2);}if(Math.random()<.12){const a=Math.random()*6.2832,d=50;addParticle(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,-Math.cos(a)*2,-Math.sin(a)*1,1,2+Math.random()*3,200+Math.random()*60);}for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];psz[i]*=.98;plife[i]-=.015;if(plife[i]<=0||psz[i]<.3){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i],`hsla(${phue[i]},70%,70%,${plife[i]*.7})`);} }}),
+darkEnergy:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;const expand=1+(t%120)/120*.3;for(let i=-3;i<=3;i++){for(let j=-2;j<=2;j++){const x=cx+i*(_W*.14)*expand;const y=cy+j*(_H*.18)*expand;if(x>0&&x<_W&&y>0&&y<_H){fillCircle(x,y,1.5,`rgba(${r},${g},${b},${.15+Math.sin(t*.01+i+j)*.04})`);} }}const waveProg=(t%90)/90;strokeCircle(cx,cy,waveProg*_W*.7,`rgba(${r},${g},${b},${(1-waveProg)*.2})`,2);}}),
+eventHorizon:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;if(Math.random()<.2){const a=Math.random()*6.2832,d=65+Math.random()*15;addParticle(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,0,0,1,2+Math.random()*4,Math.random()*360);}for(let i=pcount-1;i>=0;i--){const dx=cx-px[i],dy=cy-py[i];const d=Math.sqrt(dx*dx+dy*dy)||1;if(d<18){removeParticle(i);continue;}const redshift=Math.min(1,50/d);pvx[i]+=dx/d*Math.min(7,100/d)*.07;pvy[i]+=dy/d*Math.min(3.5,50/d)*.04;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.007;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]-redshift*120},80%,${50+redshift*20}%,${plife[i]*.8})`);}fillCircle(cx,cy,16,`rgba(0,0,0,1)`);strokeCircle(cx,cy,16,`rgba(${r},${g},${b},.4)`,2);strokeCircle(cx,cy,20,`rgba(255,100,50,.15)`,4);}}),
+paradox:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;for(let i=0;i<8;i++){const aFwd=i/8*6.2832+t*.02;const aBwd=i/8*6.2832-t*.02;const d=40;fillCircle(cx+Math.cos(aFwd)*d,cy+Math.sin(aFwd)*d*.5,3,`rgba(${r},${g},${b},.5)`);fillCircle(cx+Math.cos(aBwd)*d*.7,cy+Math.sin(aBwd)*d*.35,3,`rgba(255,255,255,.3)`);}  _ctx.save();_ctx.font='20px serif';_ctx.textAlign='center';_ctx.textBaseline='middle';_ctx.fillStyle=`rgba(${r},${g},${b},${.3+Math.sin(t*.05)*.1})`;_ctx.fillText('↔',cx,cy);_ctx.restore();}}),
+requiem:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);for(let harmonic=1;harmonic<=4;harmonic++){_ctx.beginPath();for(let x=0;x<=_W;x+=3){const amp=20/harmonic;const freq=harmonic;const y=_H/2+Math.sin(x/_W*6.2832*freq+t*.02)*amp*Math.sin(t*.008+harmonic);x===0?_ctx.moveTo(x,y):_ctx.lineTo(x,y);}_ctx.strokeStyle=`rgba(${r},${g},${b},${.15/harmonic})`;_ctx.lineWidth=3/harmonic;_ctx.stroke();}if(Math.random()<.05)addParticle(Math.random()*_W,_H*.3+Math.random()*_H*.4,(Math.random()-.5)*.3,-(0.5+Math.random()*.5),1,3+Math.random()*4,0);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i]+Math.sin(t*.04+px[i]*.02)*.3;py[i]+=pvy[i];plife[i]-=.006;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`rgba(${r},${g},${b},${plife[i]*.4})`);} }}),
+universe:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);for(let s=0;s<5;s++){const x=Math.random()*_W,y=Math.random()*_H;fillCircle(x,y,Math.random()*.8,`rgba(255,255,255,${.1+Math.random()*.15})`);}for(let g2=0;g2<3;g2++){const gx=_W*.2+g2*_W*.3,gy=_H*.3+Math.sin(t*.005+g2)*_H*.15;for(let s=0;s<20;s++){const a=s*.31+t*.003+g2;const d=s*.8;fillCircle(gx+Math.cos(a)*d,gy+Math.sin(a)*d*.4,1,`rgba(${r},${g},${b},${.08+s*.003})`);}}fillCircle(_W/2,_H/2,30,`rgba(${r},${g},${b},.04)`);}}),
+multiverse:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const bubbles=[[_W*.3,_H*.4,40],[_W*.6,_H*.5,35],[_W*.45,_H*.65,30],[_W*.2,_H*.6,25],[_W*.7,_H*.35,28]];bubbles.forEach(([bx,by,rad],idx)=>{const phase=t*.006+idx;strokeCircle(bx+Math.sin(phase)*3,by+Math.cos(phase)*2,rad,`rgba(${r},${g},${b},${.1+Math.sin(phase)*.03})`,1.5);fillCircle(bx+Math.sin(phase)*3,by+Math.cos(phase)*2,rad,`rgba(${r},${g},${b},.02)`);});if(Math.random()<.08)addParticle(Math.random()*_W,Math.random()*_H,0,0,1,2+Math.random()*3,Math.random()*360);for(let i=pcount-1;i>=0;i--){plife[i]-=.02;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},80%,75%,${plife[i]*.5})`);} }}),
+omniscience:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;const eyeW=60,eyeH=22;_ctx.save();_ctx.translate(cx,cy);_ctx.beginPath();_ctx.moveTo(-eyeW,0);_ctx.quadraticCurveTo(0,-eyeH,eyeW,0);_ctx.quadraticCurveTo(0,eyeH,-eyeW,0);_ctx.strokeStyle=`rgba(${r},${g},${b},.5)`;_ctx.lineWidth=2;_ctx.stroke();strokeCircle(0,0,12,`rgba(${r},${g},${b},.4)`,2);fillCircle(0,0,6,`rgba(${r},${g},${b},.6)`);fillCircle(0,0,2,`rgba(0,0,0,.9)`);for(let i=0;i<6;i++){const a=i/6*6.2832+t*.015;line(0,0,Math.cos(a)*eyeW,Math.sin(a)*eyeH,`rgba(${r},${g},${b},.08)`,1);}_ctx.restore();for(let i=0;i<8;i++){const a=i/8*6.2832+t*.01;fillCircle(cx+Math.cos(a)*50,cy+Math.sin(a)*20,2,`rgba(${r},${g},${b},.3)`);} }}),
+eternalFlame:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const hBase=t*.2;for(let layer=0;layer<3;layer++){if(Math.random()<.2)addParticle(_W/2+(Math.random()-.5)*(_W*.3-layer*20),_H-5,(Math.random()-.5)*(1.5-layer*.3),-(1.5+Math.random()*2.5-layer*.3),1,5+Math.random()*8+layer*2,(hBase+layer*40)%360);}for(let i=pcount-1;i>=0;i--){pvx[i]+=Math.sin(t*.06+py[i]*.02)*.4;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.012;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},100%,65%,${plife[i]})`);}strokeCircle(_W/2,_H*.85,18,`rgba(255,200,50,.3)`,4);}}),
+divineLight:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;for(let i=0;i<12;i++){const a=i/12*6.2832+t*.003;_ctx.beginPath();_ctx.moveTo(cx,cy);_ctx.lineTo(cx+Math.cos(a)*_W,cy+Math.sin(a)*_H);_ctx.strokeStyle=`rgba(255,240,180,${.04+Math.sin(t*.04+i)*.015})`;_ctx.lineWidth=10;_ctx.stroke();}fillCircle(cx,cy,20,`rgba(255,255,220,.7)`);fillCircle(cx,cy,12,`rgba(255,255,255,.9)`);if(Math.random()<.1){const a=Math.random()*6.2832,d=15+Math.random()*50;addParticle(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,(Math.random()-.5)*.3,(Math.random()-.5)*.3,1,2+Math.random()*3,50+Math.random()*20);}for(let i=pcount-1;i>=0;i--){plife[i]-=.02;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`rgba(255,240,180,${plife[i]*.8})`);} }}),
+celestialStorm:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(t%18===0){let x=Math.random()*_W,y=0;_ctx.beginPath();_ctx.moveTo(x,y);for(let s=0;s<10;s++){x+=(Math.random()-.5)*50;y+=_H/10;_ctx.lineTo(x,y);}_ctx.strokeStyle=`rgba(${r},${g},${b},.7)`;_ctx.lineWidth=2;_ctx.stroke();_ctx.strokeStyle=`rgba(255,255,255,.5)`;_ctx.lineWidth=1;_ctx.stroke();}if(Math.random()<.12)addParticle(Math.random()*_W,Math.random()*_H,(Math.random()-.5)*2,(Math.random()-.5)*2,1,2+Math.random()*3,200+Math.random()*160);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.04;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},80%,80%,${plife[i]})`);} }}),
+sacredVoid:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;for(let ring=1;ring<=5;ring++){const alpha=.03*ring+Math.sin(t*.01+ring)*.01;strokeCircle(cx,cy,ring*14,`rgba(${r},${g},${b},${alpha})`,ring*1.5);}if(Math.random()<.1){const a=Math.random()*6.2832;addParticle(cx,cy,Math.cos(a)*(2+Math.random()*3),Math.sin(a)*(2+Math.random()*3)*.5,1,3+Math.random()*5,200+Math.random()*60);}for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.012;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},60%,70%,${plife[i]*.5})`);}fillCircle(cx,cy,12,`rgba(0,0,0,.7)`);}}),
+angelsTears:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.08)addParticle(_W*.2+Math.random()*_W*.6,0,(Math.random()-.5)*.3,1+Math.random()*1.5,1,4+Math.random()*6,45+Math.random()*20);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i]+Math.sin(t*.03+px[i]*.02)*.3;py[i]+=pvy[i];plife[i]-=.006;if(plife[i]<=0||py[i]>_H){removeParticle(i);continue;}_ctx.save();_ctx.translate(px[i],py[i]);_ctx.beginPath();_ctx.moveTo(0,-psz[i]);_ctx.quadraticCurveTo(psz[i]*.5,0,0,psz[i]);_ctx.quadraticCurveTo(-psz[i]*.5,0,0,-psz[i]);_ctx.fillStyle=`hsla(${phue[i]},90%,75%,${plife[i]*.7})`;_ctx.fill();_ctx.restore();}if(t%20===0)addParticle(Math.random()*_W,Math.random()*_H,0,0,1,1.5,50);}}),
+titansWrath:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(t%12===0){for(let bolt=0;bolt<3;bolt++){let x=_W*.15+bolt*_W*.35+(Math.random()-.5)*20,y=0;_ctx.beginPath();_ctx.moveTo(x,y);for(let s=0;s<12;s++){x+=(Math.random()-.5)*70;y+=_H/12;_ctx.lineTo(x,y);}_ctx.strokeStyle=`rgba(${r},${g},${b},.8)`;_ctx.lineWidth=3+Math.random()*3;_ctx.stroke();_ctx.strokeStyle=`rgba(255,255,255,.7)`;_ctx.lineWidth=1;_ctx.stroke();}_ctx.fillStyle=`rgba(${r},${g},${b},.07)`;_ctx.fillRect(0,0,_W,_H);}if(Math.random()<.1)addParticle(Math.random()*_W,_H,(Math.random()-.5)*3,-(2+Math.random()*3),1,3+Math.random()*5,55+Math.random()*10);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.03;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},100%,80%,${plife[i]})`);} }}),
+elysium:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);_ctx.fillStyle=`rgba(255,220,120,.03)`;_ctx.fillRect(0,_H*.7,_W,_H*.3);if(Math.random()<.04)addParticle(Math.random()*_W,_H*.7+Math.random()*_H*.2,(Math.random()-.5)*.4,-(0.3+Math.random()*.5),1,4+Math.random()*7,30+Math.random()*40);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i]+Math.sin(t*.025+py[i]*.02)*.6;py[i]+=pvy[i];plife[i]-=.005;if(plife[i]<=0||py[i]<-10){removeParticle(i);continue;}_ctx.save();_ctx.translate(px[i],py[i]);_ctx.rotate(t*.03+px[i]*.01);_ctx.beginPath();_ctx.ellipse(0,0,psz[i]*.4,psz[i],0,0,6.2832);_ctx.fillStyle=`hsla(${phue[i]},80%,75%,${plife[i]*.6})`;_ctx.fill();_ctx.restore();}for(let i=0;i<6;i++){const a=i/6*6.2832+t*.003;line(_W/2,_H/2,_W/2+Math.cos(a)*30,_H/2+Math.sin(a)*15,`rgba(255,240,150,${.04+Math.sin(t*.04+i)*.01})`,6);}fillCircle(_W/2,_H/2,10,`rgba(255,240,150,.4)`);}}),
+chaosEffect:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.25){const y=Math.random()*_H;_ctx.fillStyle=`rgba(${r},${g},${b},.15)`;_ctx.fillRect(0,y,_W,5+Math.random()*15);}for(let i=0;i<10;i++){_ctx.fillStyle=`rgba(${Math.random()>.5?r:g},${Math.random()>.5?g:b},${b},${.4+Math.random()*.4})`;_ctx.fillRect(Math.random()*_W,Math.random()*_H,2+Math.random()*5,2);}if(Math.random()<.18)addParticle(Math.random()*_W,Math.random()*_H,(Math.random()-.5)*8,(Math.random()-.5)*8,1,2+Math.random()*5,Math.random()*360);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];pvx[i]+=(Math.random()-.5)*.5;pvy[i]+=(Math.random()-.5)*.5;plife[i]-=.04;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},100%,65%,${plife[i]})`);} }}),
+creation:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;const phase=(t%200)/200;const maxR=Math.max(_W,_H)*.6;strokeCircle(cx,cy,phase*maxR,`rgba(${r},${g},${b},${(1-phase)*.25})`,3*(1-phase)+1);if(Math.random()<.12){const a=Math.random()*6.2832,d=phase*maxR;addParticle(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,(Math.random()-.5)*2,(Math.random()-.5)*1,1,2+Math.random()*4,Math.random()*360);}for(let i=pcount-1;i>=0;i--){pvx[i]*=.98;pvy[i]*=.98;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.01;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},90%,75%,${plife[i]*.8})`);}fillCircle(cx,cy,8+Math.sin(t*.1)*4,`rgba(255,255,220,${.3+phase*.2})`);}}),
+destruction:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;if(Math.random()<.15){const a=Math.random()*6.2832,d=60+Math.random()*20;addParticle(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,0,0,1,3+Math.random()*5,0+Math.random()*30);}for(let i=pcount-1;i>=0;i--){const dx=cx-px[i],dy=cy-py[i];const d=Math.sqrt(dx*dx+dy*dy)||1;if(d<5){removeParticle(i);continue;}const pull=Math.min(5,80/d);pvx[i]+=dx/d*pull*.07;pvy[i]+=dy/d*pull*.04;px[i]+=pvx[i];py[i]+=pvy[i];psz[i]*=.99;plife[i]-=.01;if(plife[i]<=0||psz[i]<.3){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},100%,55%,${plife[i]*.8})`);}fillCircle(cx,cy,10+t*.02,`rgba(0,0,0,${Math.min(.9,t*.004)})`);}}),
+existence:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;for(let i=0;i<100;i++){const a=i*.13+t*.008;const d=i*.7;const x=cx+Math.cos(a)*d,y=cy+Math.sin(a)*d*.5;fillCircle(x,y,.8+i*.01,`rgba(${r},${g},${b},${.15-i*.001})`);}if(t%60===0)addParticle(cx,cy,0,0,1,0,200+Math.random()*160);for(let i=pcount-1;i>=0;i--){psz[i]+=4;plife[i]-=.015;if(plife[i]<=0){removeParticle(i);continue;}strokeCircle(px[i],py[i],psz[i],`hsla(${phue[i]},80%,70%,${plife[i]*.2})`,2);} }}),
+nothingness:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const pulse=.4+.1*Math.sin(t*.02);fillCircle(_W/2,_H/2,2,`rgba(${r},${g},${b},${pulse})`);if(t%120===0)addParticle(_W/2+(Math.random()-.5)*30,_H/2+(Math.random()-.5)*20,0,0,1,20+Math.random()*20,0);for(let i=pcount-1;i>=0;i--){psz[i]+=.5;plife[i]-=.008;if(plife[i]<=0){removeParticle(i);continue;}strokeCircle(px[i],py[i],psz[i],`rgba(${r},${g},${b},${plife[i]*.04})`,1);} }}),
+theRift:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const riftX=_W*.4+Math.sin(t*.02)*20;_ctx.beginPath();_ctx.moveTo(riftX,0);let rx=riftX,ry=0;for(let s=0;s<12;s++){rx+=(Math.random()-.5)*30;ry+=_H/12;_ctx.lineTo(rx,ry);}_ctx.strokeStyle=`rgba(${r},${g},${b},.7)`;_ctx.lineWidth=4;_ctx.stroke();_ctx.strokeStyle=`rgba(0,0,0,.9)`;_ctx.lineWidth=2;_ctx.stroke();if(Math.random()<.1)addParticle(riftX+(Math.random()-.5)*20,Math.random()*_H,(Math.random()-.5)*3,(Math.random()-.5)*2,1,2+Math.random()*4,Math.random()*360);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.016;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},90%,70%,${plife[i]*.7})`);} }}),
+oblivion:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;for(let ring=1;ring<=8;ring++){const a=ring*.08+t*.005;strokeCircle(cx,cy,ring*10,`rgba(${r},${g},${b},${.06-ring*.005+Math.sin(t*.01+ring)*.01})`,ring*.4);}if(Math.random()<.15){const a=Math.random()*6.2832,d=50+Math.random()*25;addParticle(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,0,0,1,3+Math.random()*5,0);}for(let i=pcount-1;i>=0;i--){const dx=cx-px[i],dy=cy-py[i];const d=Math.sqrt(dx*dx+dy*dy)||1;if(d<4){removeParticle(i);continue;}pvx[i]+=dx/d*.2;pvy[i]+=dy/d*.1;px[i]+=pvx[i];py[i]+=pvy[i];psz[i]*=.97;plife[i]-=.015;if(plife[i]<=0||psz[i]<.3){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`rgba(${r},${g},${b},${plife[i]*.5})`);}fillCircle(cx,cy,6,`rgba(0,0,0,1)`);}}),
+eternity:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;for(let trail=0;trail<5;trail++){const offset=trail*.12;_ctx.beginPath();for(let s=0;s<=80;s++){const theta=s/80*6.2832+t*.01+offset;const denom=1+Math.sin(theta)*Math.sin(theta);const x=cx+Math.cos(theta)*60/denom;const y=cy+Math.sin(theta)*Math.cos(theta)*35/denom;s===0?_ctx.moveTo(x,y):_ctx.lineTo(x,y);}_ctx.closePath();_ctx.strokeStyle=`rgba(${r},${g},${b},${.4-trail*.06})`;_ctx.lineWidth=2-trail*.25;_ctx.stroke();} }}),
+primordialSea:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);for(let layer=0;layer<4;layer++){const speed=(layer+1)*.012;const amp=12+layer*6;const yBase=_H*.35+layer*18;_ctx.beginPath();for(let x=0;x<=_W;x+=4){const y=yBase+Math.sin(x/_W*6.2832*2+t*speed)*amp+Math.sin(x/_W*6.2832+t*speed*.7)*amp*.4;x===0?_ctx.moveTo(x,y):_ctx.lineTo(x,y);}_ctx.lineTo(_W,_H);_ctx.lineTo(0,_H);_ctx.closePath();_ctx.fillStyle=`rgba(${r},${g},${b},${.04+layer*.015})`;_ctx.fill();}if(t%45===0)addParticle(_W*.1+Math.random()*_W*.8,_H-5,0,-(0.3+Math.random()*.4),1,3+Math.random()*5,0);for(let i=pcount-1;i>=0;i--){py[i]+=pvy[i];plife[i]-=.01;if(plife[i]<=0||py[i]<_H*.3){removeParticle(i);continue;}strokeCircle(px[i],py[i],psz[i]*(1.2-plife[i]),`rgba(${r},${g},${b},${plife[i]*.3})`,1);} }}),
+theCycle:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;const cyclePos=(t*.008)%6.2832;for(let i=0;i<60;i++){const a=i/60*6.2832;const d=20+i*.5;const lifePhase=(a-cyclePos+6.2832)%6.2832/6.2832;const hue=lifePhase<.33?100:lifePhase<.67?0:280;const light=lifePhase<.33?40:lifePhase<.67?60:30;fillCircle(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,2,`hsla(${hue},70%,${light}%,.4)`);}fillCircle(cx,cy,8,`rgba(${r},${g},${b},.3)`);}}),
+godhood:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;const rays=16;for(let i=0;i<rays;i++){const a=i/rays*6.2832+t*.003;const inner=22,outer=55+Math.sin(t*.04+i*1.3)*15;line(cx+Math.cos(a)*inner,cy+Math.sin(a)*inner*.5,cx+Math.cos(a)*outer,cy+Math.sin(a)*outer*.5,`rgba(${r},${g},${b},${.15+Math.sin(t*.05+i)*.04})`,2);}fillCircle(cx,cy,20,`rgba(${r},${g},${b},.25)`);fillCircle(cx,cy,12,`rgba(255,255,220,.6)`);if(Math.random()<.12){const a=Math.random()*6.2832,d=15+Math.random()*40;addParticle(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,(Math.random()-.5)*2,(Math.random()-.5)*1,1,2+Math.random()*4,50+Math.random()*30);}for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.018;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},100%,80%,${plife[i]})`);} }}),
+transcendence:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;for(let rung=0;rung<8;rung++){const y=_H*.9-rung*(_H*.1)+Math.sin(t*.015+rung)*(rung*2);const width=(_W*.4)*(1-rung/8)*.8;const alpha=.06+rung*.02;line(cx-width,y,cx+width,y,`rgba(${r},${g},${b},${alpha})`,2);if(t%60===rung*7)addParticle(cx+(Math.random()-.5)*width*2,y,0,-(1.5+Math.random()),1,3+Math.random()*5,Math.random()*360);}for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i]+Math.sin(t*.04+px[i]*.02)*.3;py[i]+=pvy[i];plife[i]-=.008;if(plife[i]<=0||py[i]<-10){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},90%,80%,${plife[i]*.6})`);} }}),
+omnipotence:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(t%20===0){let x=_W*.5,y=0;_ctx.beginPath();_ctx.moveTo(x,y);for(let s=0;s<8;s++){x+=(Math.random()-.5)*60;y+=_H/8;_ctx.lineTo(x,y);}_ctx.strokeStyle=`rgba(${r},${g},${b},.7)`;_ctx.lineWidth=2;_ctx.stroke();}if(Math.random()<.15)addParticle(_W*.3+Math.random()*_W*.4,_H-5,(Math.random()-.5)*1.5,-(1.5+Math.random()*2),1,4+Math.random()*7,Math.random()*60);if(t%10===0)fillCircle(Math.random()*_W,Math.random()*_H,Math.random()*2,`rgba(255,255,255,.3)`);for(let i=pcount-1;i>=0;i--){pvx[i]+=Math.sin(t*.05+py[i]*.02)*.3;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.015;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},100%,70%,${plife[i]})`);} }}),
+theAbsolute:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;const pulse=1+.05*Math.sin(t*.04);strokeCircle(cx,cy,60*pulse,`rgba(${r},${g},${b},.25)`,3);strokeCircle(cx,cy,40*pulse,`rgba(${r},${g},${b},.15)`,2);strokeCircle(cx,cy,20*pulse,`rgba(${r},${g},${b},.08)`,1);if(Math.random()<.08){const a=Math.random()*6.2832,d=70+Math.random()*10;addParticle(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,0,0,1,2+Math.random()*4,Math.random()*360);}for(let i=pcount-1;i>=0;i--){const dx=cx-px[i],dy=cy-py[i];const d=Math.sqrt(dx*dx+dy*dy)||1;if(d<20*pulse){removeParticle(i);continue;}pvx[i]+=dx/d*.12;pvy[i]+=dy/d*.06;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.01;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},80%,75%,${plife[i]*.7})`);}fillCircle(cx,cy,8,`rgba(255,255,255,.5)`);}}),
+alpha:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;for(let i=0;i<12;i++){const a=(i/12-0.5)*Math.PI+Math.PI/2;const len=30+Math.random()*40;line(cx,cy+20,cx+Math.cos(a)*len,cy+20-Math.sin(a)*len,`rgba(255,200,80,${.05+Math.sin(t*.04+i)*.02})`,3);}fillCircle(cx,cy+20,12,`rgba(255,220,100,.5)`);if(Math.random()<.04)addParticle(cx+(Math.random()-.5)*20,cy+20,(Math.random()-.5)*2,-(1+Math.random()*1.5),1,2+Math.random()*3,40+Math.random()*20);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.012;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},100%,80%,${plife[i]})`);} }}),
+omega:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;const fade=.5+.5*Math.sin(t*.01);for(let i=0;i<20;i++){const x=((i*137+t*0.1)%_W),y=((i*97+t*0.05)%_H);fillCircle(x,y,Math.max(0,1.5-i*.03)*fade,`rgba(255,255,200,${fade*.2})`);}const phase=(t%150)/150;strokeCircle(cx,cy,phase*50,`rgba(${r},${g},${b},${(1-phase)*.3})`,2*(1-phase));fillCircle(cx,cy,6*(1-phase*.5),`rgba(${r},${g},${b},${.3*(1-phase*.5)})`);}}),
+theBeginning:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;const phase=(t%240)/240;strokeCircle(cx,cy,phase*_W*.7,`rgba(${r},${g},${b},${(1-phase)*.4})`,4*(1-phase)+1);fillCircle(cx,cy,8*(1-phase*.5),`rgba(255,255,240,${.8*(1-phase*.3)})`);if(Math.random()<.05){const a=Math.random()*6.2832,d=phase*_W*.3;addParticle(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,(Math.random()-.5)*1,(Math.random()-.5)*.5,1,2+Math.random()*3,Math.random()*360);}for(let i=pcount-1;i>=0;i--){pvx[i]*=.99;pvy[i]*=.99;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.008;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},80%,85%,${plife[i]*.6})`);} }}),
+theEnd:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;if(Math.random()<.02)addParticle(Math.random()*_W,Math.random()*_H,(Math.random()-.5)*.2,(Math.random()-.5)*.1,1,2+Math.random()*3,10+Math.random()*20);for(let i=pcount-1;i>=0;i--){psz[i]-=.01;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.003;if(plife[i]<=0||psz[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},40%,40%,${plife[i]*.4})`);}const quiet=.3+.05*Math.sin(t*.005);fillCircle(cx,cy,4,`rgba(${r},${g},${b},${quiet})`);}}),
+pureLight:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;for(let i=0;i<8;i++){const a=i/8*6.2832+t*.002;_ctx.beginPath();_ctx.moveTo(cx,cy);_ctx.lineTo(cx+Math.cos(a)*_W,cy+Math.sin(a)*_W*.5);_ctx.strokeStyle=`rgba(255,255,220,${.04+Math.sin(t*.04+i)*.01})`;_ctx.lineWidth=12;_ctx.stroke();}if(Math.random()<.1)addParticle(Math.random()*_W,Math.random()*_H,0,0,1,2+Math.random()*3,60+Math.random()*30);for(let i=pcount-1;i>=0;i--){plife[i]-=.025;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`rgba(255,255,220,${plife[i]*.9})`);} }}),
+pureDarkness:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;_ctx.fillStyle=`rgba(0,0,0,.04)`;_ctx.fillRect(0,0,_W,_H);const n=6;for(let i=0;i<n;i++){const a=i/n*6.2832+t*.004;_ctx.beginPath();_ctx.moveTo(cx,cy);let x=cx,y=cy;for(let s=0;s<10;s++){x+=Math.cos(a+Math.sin(t*.01+s*.3)*.5)*9;y+=Math.sin(a+Math.sin(t*.01+s*.3)*.5)*5;_ctx.lineTo(x,y);}_ctx.strokeStyle=`rgba(${r},${g},${b},.15)`;_ctx.lineWidth=2;_ctx.stroke();}if(Math.random()<.06){const a=Math.random()*6.2832,d=40+Math.random()*25;addParticle(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,0,0,1,4+Math.random()*6,0);}for(let i=pcount-1;i>=0;i--){const dx=cx-px[i],dy=cy-py[i];const d=Math.sqrt(dx*dx+dy*dy)||1;if(d<8){removeParticle(i);continue;}pvx[i]+=dx/d*.1;pvy[i]+=dy/d*.05;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.01;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`rgba(${r},${g},${b},${plife[i]*.4})`);} }}),
+theOne:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;for(let ring=1;ring<=8;ring++){const pulse=.5+.5*Math.sin(t*.03+ring*.4);strokeCircle(cx,cy,ring*10*pulse,`rgba(${r},${g},${b},${.1/ring*pulse})`,1.5);}for(let i=0;i<12;i++){const a=i/12*6.2832+t*.005;const d=45+Math.sin(t*.03+i)*8;fillCircle(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,3,`hsla(${i*30},100%,70%,.5)`);}fillCircle(cx,cy,12,`rgba(255,255,255,.9)`);if(Math.random()<.1){const a=Math.random()*6.2832,d=10+Math.random()*40;addParticle(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,(Math.random()-.5)*2,(Math.random()-.5)*1,1,2+Math.random()*4,Math.random()*360);}for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.02;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},100%,80%,${plife[i]})`);} }}),
+beyond:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;const sides=3+Math.floor((Math.sin(t*.008)+1)*2.5);_ctx.beginPath();for(let i=0;i<=sides;i++){const a=i/sides*6.2832+t*.006;const d=40+Math.sin(t*.02)*10;const x=cx+Math.cos(a)*d,y=cy+Math.sin(a)*d*.5;i===0?_ctx.moveTo(x,y):_ctx.lineTo(x,y);}_ctx.strokeStyle=`rgba(${r},${g},${b},.35)`;_ctx.lineWidth=2;_ctx.stroke();if(Math.random()<.1)addParticle(Math.random()*_W,Math.random()*_H,(Math.random()-.5)*3,(Math.random()-.5)*2,1,2+Math.random()*5,Math.random()*360);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];pvx[i]+=(Math.random()-.5)*.2;pvy[i]+=(Math.random()-.5)*.1;plife[i]-=.015;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},80%,75%,${plife[i]*.6})`);} }}),
+trueVoid:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(t%300===0)addParticle(_W/2+(Math.random()-.5)*10,_H/2+(Math.random()-.5)*10,(Math.random()-.5)*.1,(Math.random()-.5)*.05,1,30+Math.random()*20,0);for(let i=pcount-1;i>=0;i--){psz[i]+=.3;plife[i]-=.003;if(plife[i]<=0){removeParticle(i);continue;}strokeCircle(px[i],py[i],psz[i],`rgba(${r},${g},${b},${plife[i]*.03})`,1);}fillCircle(_W/2,_H/2,1,`rgba(${r},${g},${b},.5)`);}}),
+allThatis:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);for(let i=0;i<30;i++){const a=(t*.003+i*.21)%6.2832;const d=5+i*2.5;fillCircle(_W/2+Math.cos(a)*d,_H/2+Math.sin(a)*d*.5,2+i*.04,`hsla(${i*12},${60+i}%,${50+i}%,.08)`);}if(Math.random()<.15){const a=Math.random()*6.2832,d=Math.random()*70;addParticle(_W/2+Math.cos(a)*d,_H/2+Math.sin(a)*d*.5,-Math.cos(a)*.5,-Math.sin(a)*.3,1,2+Math.random()*4,Math.random()*360);}for(let i=pcount-1;i>=0;i--){const dx=_W/2-px[i],dy=_H/2-py[i];const d=Math.sqrt(dx*dx+dy*dy)||1;pvx[i]+=dx/d*.08;pvy[i]+=dy/d*.04;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.012;if(plife[i]<=0||d<5){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},90%,70%,${plife[i]*.6})`);}fillCircle(_W/2,_H/2,8,`rgba(255,255,255,.8)`);}}),
+theImpossible:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.1)addParticle(Math.random()*_W,_H*.8,(Math.random()-.5)*4,-(2+Math.random()*3),1,3+Math.random()*5,Math.random()*360);if(Math.random()<.1)addParticle(Math.random()*_W,_H*.2,(Math.random()-.5)*4,2+Math.random()*3,1,3+Math.random()*5,Math.random()*360);if(t%17===0){_ctx.fillStyle=`rgba(255,0,255,.06)`;_ctx.fillRect(0,Math.random()*_H,_W,10);}for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.018;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},100%,65%,${plife[i]})`);} }}),
+redacted:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const barH=20;const bars=[_H*.2,_H*.4,_H*.55,_H*.7];bars.forEach(y=>{_ctx.fillStyle=`rgba(0,0,0,${.7+Math.sin(t*.1)*.1})`;_ctx.fillRect(0,y,_W,barH);});if(Math.random()<.2){_ctx.fillStyle=`rgba(${r},${g},${b},.3)`;_ctx.fillRect(Math.random()*_W*.3,Math.random()*_H,Math.random()*80,4);}if(Math.random()<.08)addParticle(Math.random()*_W,Math.random()*_H,(Math.random()-.5)*3,(Math.random()-.5)*2,1,2+Math.random()*4,0);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.04;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`rgba(${r},${g},${b},${plife[i]*.7})`);} }}),
+unknown:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.3){switch(Math.floor(Math.random()*5)){case 0:fillCircle(Math.random()*_W,Math.random()*_H,5+Math.random()*20,`rgba(${r},${g},${b},.2)`);break;case 1:line(Math.random()*_W,Math.random()*_H,Math.random()*_W,Math.random()*_H,`rgba(${r},${g},${b},.15)`,1);break;case 2:strokeCircle(Math.random()*_W,Math.random()*_H,10+Math.random()*30,`rgba(${r},${g},${b},.1)`,1);break;case 3:_ctx.fillStyle=`rgba(${r},${g},${b},.05)`;_ctx.fillRect(Math.random()*_W,Math.random()*_H,Math.random()*80,Math.random()*40);break;case 4:addParticle(Math.random()*_W,Math.random()*_H,(Math.random()-.5)*5,(Math.random()-.5)*5,1,3+Math.random()*6,Math.random()*360);break;}}for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.03;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},80%,70%,${plife[i]})`);} }}),
+error:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.35){const y=Math.random()*_H;_ctx.fillStyle=`rgba(255,0,0,${.1+Math.random()*.2})`;_ctx.fillRect(0,y,_W,2+Math.random()*8);}for(let i=0;i<8;i++){_ctx.fillStyle=`rgba(${Math.random()>.5?'255,0,0':'255,255,0'},.6)`;_ctx.fillRect(Math.random()*_W,Math.random()*_H,2+Math.random()*8,2);}if(Math.random()<.08){_ctx.strokeStyle=`rgba(255,0,0,.5)`;_ctx.lineWidth=2;_ctx.strokeRect(4,4,_W-8,_H-8);}if(Math.random()<.04)addParticle(Math.random()*_W,Math.random()*_H,(Math.random()-.5)*6,(Math.random()-.5)*6,1,2+Math.random()*5,0);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.05;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`rgba(255,0,0,${plife[i]*.8})`);} }}),
+glitch:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.5){const y=Math.random()*_H;const h=Math.random()*15+2;const shift=Math.random()*30-15;try{const d=_ctx.getImageData(0,y,_W,h);_ctx.putImageData(d,shift,y);}catch(e){}_ctx.fillStyle=`rgba(${Math.random()>.5?r:0},${Math.random()>.5?g:255},${Math.random()>.5?b:0},.15)`;_ctx.fillRect(0,y,_W,h);}for(let i=0;i<5;i++){_ctx.fillStyle=`rgba(${Math.random()>.3?'0,255,255':'255,0,255'},.5)`;_ctx.fillRect(Math.random()*_W,Math.random()*_H,3+Math.random()*10,2);}if(Math.random()<.12)addParticle(Math.random()*_W,Math.random()*_H,(Math.random()-.5)*8,(Math.random()-.5)*8,1,2+Math.random()*5,Math.random()*360);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];pvx[i]+=(Math.random()-.5)*.5;pvy[i]+=(Math.random()-.5)*.5;plife[i]-=.04;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},100%,60%,${plife[i]})`);} }}),
+zeroFortyFour:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.6){const y=Math.random()*_H;_ctx.fillStyle=`rgba(255,0,0,${Math.random()*.4})`;_ctx.fillRect(0,y,_W,Math.random()*20);_ctx.fillStyle=`rgba(0,255,0,${Math.random()*.3})`;_ctx.fillRect(0,y+2,_W,Math.random()*5);}_ctx.font='8px monospace';for(let i=0;i<8;i++){_ctx.fillStyle=`rgba(255,0,0,${.1+Math.random()*.2})`;_ctx.fillText(Math.random()>.5?'0':'1',Math.random()*_W,Math.random()*_H);}if(Math.random()<.3)addParticle(Math.random()*_W,Math.random()*_H,(Math.random()-.5)*10,(Math.random()-.5)*10,1,2+Math.random()*6,Math.random()*360);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];pvx[i]+=(Math.random()-.5);pvy[i]+=(Math.random()-.5);plife[i]-=.05;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`rgba(255,0,0,${plife[i]*.8})`);}_ctx.font=`${20+Math.sin(t*.1)*5}px monospace`;_ctx.fillStyle=`rgba(255,0,0,${.3+Math.sin(t*.15)*.1})`;_ctx.textAlign='center';_ctx.fillText('044',_W/2,_H/2);_ctx.textAlign='start';}})
+,
+// ── PRIMORDIAL ──
+firstFlame:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.4)addParticle(_W/2+(Math.random()-.5)*_W*.5,_H-8,(Math.random()-.5)*2,-(2+Math.random()*4),1,6+Math.random()*14,Math.random()*60);for(let i=pcount-1;i>=0;i--){pvx[i]+=Math.sin(t*.06+py[i]*.02)*.6;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.012;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},100%,${55+plife[i]*30}%,${plife[i]})`);}_ctx.fillStyle=`rgba(255,120,0,.04)`;_ctx.fillRect(0,0,_W,_H);}}),
+genesis:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;const phase=(t%300)/300;for(let i=0;i<8;i++){const a=i/8*6.2832+t*.008;const d=20+phase*60;strokeCircle(cx+Math.cos(a)*d*.3,cy+Math.sin(a)*d*.15,d,`rgba(${r},${g},${b},${(1-phase)*.1})`,2);}fillCircle(cx,cy,10*(1-phase*.5),`rgba(255,255,200,${.8*(1-phase*.3)})`);if(Math.random()<.1){const a=Math.random()*6.2832;addParticle(cx,cy,Math.cos(a)*(1+Math.random()*3),Math.sin(a)*(1+Math.random()*3)*.5,1,2+Math.random()*4,Math.random()*360);}for(let i=pcount-1;i>=0;i--){pvx[i]*=.99;pvy[i]*=.99;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.008;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},80%,80%,${plife[i]*.6})`);} }}),
+voidSovereign:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;for(let ring=1;ring<=6;ring++){strokeCircle(cx,cy,ring*12,`rgba(${r},${g},${b},${.05+Math.sin(t*.02+ring)*.02})`,ring*1.2);}for(let i=0;i<8;i++){const a=i/8*6.2832+t*.005;line(cx+Math.cos(a)*20,cy+Math.sin(a)*10,cx+Math.cos(a)*55,cy+Math.sin(a)*55*.5,`rgba(${r},${g},${b},.25)`,2);}if(Math.random()<.12){const a=Math.random()*6.2832,d=60;addParticle(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,0,0,1,2+Math.random()*4,260+Math.random()*60);}for(let i=pcount-1;i>=0;i--){const dx=cx-px[i],dy=cy-py[i];const d=Math.sqrt(dx*dx+dy*dy)||1;if(d<15){removeParticle(i);continue;}pvx[i]+=dx/d*.15;pvy[i]+=dy/d*.08;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.01;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},70%,65%,${plife[i]*.7})`);} }}),
+ancientTitan:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(t%10===0){for(let bolt=0;bolt<4;bolt++){let x=_W*.1+bolt*_W*.25+(Math.random()-.5)*20,y=0;_ctx.beginPath();_ctx.moveTo(x,y);for(let s=0;s<10;s++){x+=(Math.random()-.5)*60;y+=_H/10;_ctx.lineTo(x,y);}_ctx.strokeStyle=`rgba(${r},${g},${b},.8)`;_ctx.lineWidth=2+Math.random()*4;_ctx.stroke();} }if(Math.random()<.1)addParticle(Math.random()*_W,_H,(Math.random()-.5)*2,-(2+Math.random()*4),1,4+Math.random()*8,50+Math.random()*20);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.02;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},100%,70%,${plife[i]})`);} }}),
+primordialChaos:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.3){const y=Math.random()*_H;_ctx.fillStyle=`rgba(${r},${g},${b},.2)`;_ctx.fillRect(0,y,_W,5+Math.random()*20);}for(let i=0;i<12;i++){_ctx.fillStyle=`rgba(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},.3)`;_ctx.fillRect(Math.random()*_W,Math.random()*_H,2+Math.random()*8,2);}if(Math.random()<.2)addParticle(Math.random()*_W,Math.random()*_H,(Math.random()-.5)*10,(Math.random()-.5)*10,1,2+Math.random()*6,Math.random()*360);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];pvx[i]+=(Math.random()-.5)*.8;pvy[i]+=(Math.random()-.5)*.8;plife[i]-=.04;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},100%,65%,${plife[i]})`);} }}),
+worldSerpent:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);_ctx.beginPath();for(let s=0;s<=100;s++){const prog=s/100;const x=_W*.05+prog*_W*.9;const y=_H/2+Math.sin(prog*6.2832*2+t*.03)*(_H*.3);s===0?_ctx.moveTo(x,y):_ctx.lineTo(x,y);}_ctx.strokeStyle=`rgba(${r},${g},${b},.7)`;_ctx.lineWidth=12;_ctx.lineCap='round';_ctx.stroke();_ctx.strokeStyle=`rgba(${r},${g},${b},.2)`;_ctx.lineWidth=22;_ctx.stroke();const hx=_W*.95,hy=_H/2+Math.sin(6.2832*2+t*.03)*(_H*.3);fillCircle(hx,hy,14,`rgba(${r},${g},${b},.8)`);if(Math.random()<.06)addParticle(Math.random()*_W,_H/2+(Math.random()-.5)*_H*.5,(Math.random()-.5)*.5,(Math.random()-.5)*.3,1,4+Math.random()*6,100+Math.random()*40);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.01;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},60%,40%,${plife[i]*.7})`);} }}),
+primalStorm:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(t%10===0){let x=Math.random()*_W,y=0;_ctx.beginPath();_ctx.moveTo(x,y);for(let s=0;s<12;s++){x+=(Math.random()-.5)*70;y+=_H/12;_ctx.lineTo(x,y);}_ctx.strokeStyle=`rgba(${r},${g},${b},.9)`;_ctx.lineWidth=3;_ctx.stroke();_ctx.strokeStyle='rgba(255,255,255,.6)';_ctx.lineWidth=1;_ctx.stroke();}if(Math.random()<.15)addParticle(Math.random()*_W,-5,2+Math.random()*3,1.5+Math.random()*3,1,3+Math.random()*6,0);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i]+Math.sin(t*.05+py[i]*.02)*1.2;py[i]+=pvy[i];plife[i]-=.009;if(plife[i]<=0||py[i]>_H+10){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`rgba(${r},${g},${b},${plife[i]*.7})`);} }}),
+originPoint:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;if(Math.random()<.1){const a=Math.random()*6.2832;addParticle(cx,cy,Math.cos(a)*(3+Math.random()*5),Math.sin(a)*(3+Math.random()*5)*.5,1,2+Math.random()*4,Math.random()*360);}for(let i=pcount-1;i>=0;i--){pvx[i]*=.99;pvy[i]*=.99;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.01;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},80%,75%,${plife[i]*.8})`);}const pulse=.5+.5*Math.sin(t*.06);fillCircle(cx,cy,8+pulse*20,`rgba(${r},${g},${b},${.2*pulse})`);fillCircle(cx,cy,4,`rgba(255,255,255,.9)`);}}),
+deepAbyss:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;for(let i=10;i>=1;i--){strokeCircle(cx,cy,i*12,`rgba(${r},${g},${b},${.06-i*.004+Math.sin(t*.01+i)*.01})`,1.5);}if(Math.random()<.2){const a=Math.random()*6.2832,d=70+Math.random()*20;addParticle(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,0,0,1,2+Math.random()*4,260+Math.random()*40);}for(let i=pcount-1;i>=0;i--){const dx=cx-px[i],dy=cy-py[i];const d=Math.sqrt(dx*dx+dy*dy)||1;if(d<10){removeParticle(i);continue;}pvx[i]+=dx/d*.3;pvy[i]+=dy/d*.15;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.008;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},60%,50%,${plife[i]*.7})`);} }}),
+titansHeart:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;const beat=Math.abs(Math.sin(t*.06));const rad=20+beat*15;fillCircle(cx,cy,rad,`rgba(${r},${g},${b},${.2+beat*.2})`);strokeCircle(cx,cy,rad+5,`rgba(${r},${g},${b},${.3*beat})`,3);if(beat>.8&&Math.random()<.3){const a=Math.random()*6.2832;addParticle(cx,cy,Math.cos(a)*(3+Math.random()*5),Math.sin(a)*(3+Math.random()*5)*.5,1,3+Math.random()*6,300+Math.random()*60);}for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.02;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},80%,60%,${plife[i]})`);} }}),
+// ── ABYSSAL ──
+theDevourer:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;if(Math.random()<.2){const a=Math.random()*6.2832,d=75;addParticle(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,0,0,1,3+Math.random()*5,260+Math.random()*40);}for(let i=pcount-1;i>=0;i--){const dx=cx-px[i],dy=cy-py[i];const d=Math.sqrt(dx*dx+dy*dy)||1;if(d<8){removeParticle(i);continue;}pvx[i]+=dx/d*.25;pvy[i]+=dy/d*.12;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.006;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},70%,50%,${plife[i]*.8})`);}fillCircle(cx,cy,12,`rgba(0,0,0,1)`);strokeCircle(cx,cy,12,`rgba(${r},${g},${b},.6)`,3);strokeCircle(cx,cy,18,`rgba(${r},${g},${b},.2)`,6);}}),
+voidWraith:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const n=5;for(let i=0;i<n;i++){const phase=i/n*6.2832;_ctx.beginPath();let x=_W/2,y=_H/2;_ctx.moveTo(x,y);for(let s=1;s<=15;s++){const a=phase+Math.sin(t*.015+s*.3)*1.2+t*.003;const d=s*9;x=_W/2+Math.cos(a)*d;y=_H/2+Math.sin(a)*d*.5;_ctx.lineTo(x,y);}_ctx.strokeStyle=`rgba(${r},${g},${b},${.2+Math.sin(t*.03+i)*.08})`;_ctx.lineWidth=3;_ctx.stroke();}fillCircle(_W/2,_H/2,10,`rgba(${r},${g},${b},.3)`);}}),
+corruption:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.2){_ctx.fillStyle=`rgba(${r},${g},${b},.15)`;_ctx.fillRect(0,Math.random()*_H,_W,Math.random()*20+2);}for(let i=0;i<8;i++){_ctx.fillStyle=`rgba(${Math.floor(Math.random()*100)},0,${Math.floor(Math.random()*100)},.4)`;_ctx.fillRect(Math.random()*_W,Math.random()*_H,2+Math.random()*10,2);}if(Math.random()<.1)addParticle(Math.random()*_W,Math.random()*_H,(Math.random()-.5)*4,(Math.random()-.5)*4,1,2+Math.random()*6,280+Math.random()*40);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.04;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},90%,40%,${plife[i]})`);} }}),
+abyssalEye:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;const eyeW=70,eyeH=25;_ctx.save();_ctx.translate(cx,cy);_ctx.beginPath();_ctx.moveTo(-eyeW,0);_ctx.quadraticCurveTo(0,-eyeH,eyeW,0);_ctx.quadraticCurveTo(0,eyeH,-eyeW,0);_ctx.fillStyle=`rgba(0,0,0,.7)`;_ctx.fill();_ctx.strokeStyle=`rgba(${r},${g},${b},.7)`;_ctx.lineWidth=2;_ctx.stroke();const pupil=8+Math.sin(t*.05)*3;fillCircle(0,0,pupil,`rgba(${r},${g},${b},.8)`);fillCircle(0,0,pupil*.4,`rgba(0,0,0,1)`);for(let i=0;i<8;i++){const a=i/8*6.2832;line(0,0,Math.cos(a)*eyeW*.5,Math.sin(a)*eyeH*.5,`rgba(${r},${g},${b},.08)`,1);}_ctx.restore();}}),
+darkSovereign:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;const rays=20;for(let i=0;i<rays;i++){const a=i/rays*6.2832+t*.004;const inner=15,outer=50+Math.sin(t*.04+i*1.5)*20;line(cx+Math.cos(a)*inner,cy+Math.sin(a)*inner*.5,cx+Math.cos(a)*outer,cy+Math.sin(a)*outer*.5,`rgba(${r},${g},${b},${.12+Math.sin(t*.05+i)*.04})`,1.5);}fillCircle(cx,cy,14,`rgba(${r},${g},${b},.5)`);fillCircle(cx,cy,8,`rgba(0,0,0,.9)`);}}),
+entropy:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;if(Math.random()<.08){const x=Math.random()*_W,y=Math.random()*_H;addParticle(x,y,(Math.random()-.5)*.3,(Math.random()-.5)*.2,1,3+Math.random()*6,270+Math.random()*30);}for(let i=pcount-1;i>=0;i--){psz[i]-=.015;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.004;if(plife[i]<=0||psz[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`rgba(${r},${g},${b},${plife[i]*.4})`);}for(let i=0;i<6;i++){const x=_W*.1+i*_W*.15;_ctx.fillStyle=`rgba(${r},${g},${b},${.04+Math.sin(t*.01+i)*.02})`;_ctx.fillRect(x,0,_W*.08,_H);} }}),
+theForgotten:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;for(let ring=5;ring>=1;ring--){strokeCircle(cx,cy,ring*14,`rgba(${r},${g},${b},${.03+Math.sin(t*.008+ring)*.01})`,ring*2);}fillCircle(cx,cy,10,`rgba(${r},${g},${b},.15)`);if(Math.random()<.03)addParticle(cx+(Math.random()-.5)*80,cy+(Math.random()-.5)*50,(Math.random()-.5)*.3,(Math.random()-.5)*.2,1,3+Math.random()*5,270+Math.random()*20);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.006;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`rgba(${r},${g},${b},${plife[i]*.35})`);} }}),
+soulAbyss:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.05)addParticle(_W*.2+Math.random()*_W*.6,_H+10,(Math.random()-.5)*.4,-(0.5+Math.random()*.8),1,8+Math.random()*16,270+Math.random()*60);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i]+Math.sin(t*.04+px[i]*.02)*.8;py[i]+=pvy[i];plife[i]-=.005;if(plife[i]<=0||py[i]<-20){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*.4,`hsla(${phue[i]},70%,60%,${plife[i]*.8})`);fillCircle(px[i],py[i],psz[i],`hsla(${phue[i]},70%,40%,${plife[i]*.12})`);} }}),
+nihil:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;fillCircle(cx,cy,2,`rgba(${r},${g},${b},.3)`);if(t%200===0)addParticle(cx,cy,(Math.random()-.5)*.05,(Math.random()-.5)*.03,1,40+Math.random()*20,270);for(let i=pcount-1;i>=0;i--){psz[i]+=.2;plife[i]-=.002;if(plife[i]<=0){removeParticle(i);continue;}strokeCircle(px[i],py[i],psz[i],`rgba(${r},${g},${b},${plife[i]*.02})`,1);} }}),
+theUnmaker:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;if(Math.random()<.15){const a=Math.random()*6.2832,d=70;addParticle(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,0,0,1,4+Math.random()*6,260+Math.random()*60);}for(let i=pcount-1;i>=0;i--){const dx=cx-px[i],dy=cy-py[i];const d=Math.sqrt(dx*dx+dy*dy)||1;if(d<6){removeParticle(i);continue;}pvx[i]+=dx/d*.4;pvy[i]+=dy/d*.2;px[i]+=pvx[i];py[i]+=pvy[i];psz[i]-=.02;plife[i]-=.012;if(plife[i]<=0||psz[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},80%,45%,${plife[i]*.8})`);}fillCircle(cx,cy,8,`rgba(0,0,0,1)`);strokeCircle(cx,cy,8,`rgba(${r},${g},${b},.8)`,3);strokeCircle(cx,cy,14,`rgba(${r},${g},${b},.4)`,2);strokeCircle(cx,cy,22,`rgba(${r},${g},${b},.2)`,1);}}),
+// ── ETERNAL ──
+infiniteLight:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;for(let i=0;i<16;i++){const a=i/16*6.2832+t*.002;_ctx.beginPath();_ctx.moveTo(cx,cy);_ctx.lineTo(cx+Math.cos(a)*_W,cy+Math.sin(a)*_W*.5);_ctx.strokeStyle=`rgba(255,255,200,${.05+Math.sin(t*.04+i)*.015})`;_ctx.lineWidth=8;_ctx.stroke();}fillCircle(cx,cy,28,`rgba(255,255,220,.8)`);fillCircle(cx,cy,18,`rgba(255,255,255,.95)`);if(Math.random()<.12){const a=Math.random()*6.2832,d=20+Math.random()*60;addParticle(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,(Math.random()-.5)*.5,(Math.random()-.5)*.5,1,2+Math.random()*3,50+Math.random()*20);}for(let i=pcount-1;i>=0;i--){plife[i]-=.02;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`rgba(255,240,180,${plife[i]*.9})`);} }}),
+deathless:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;const phase=(t%120)/120;for(let i=0;i<3;i++){const a=i/3*6.2832+t*.003;const rad=40+i*10;strokeCircle(cx+Math.cos(a)*rad*.5,cy+Math.sin(a)*rad*.3,rad,`rgba(${r},${g},${b},.12)`,1.5);}if(phase<.1)fillCircle(cx,cy,20*(1-phase/.1),`rgba(255,255,200,${.8*(1-phase/.1)})`);fillCircle(cx,cy,6,`rgba(${r},${g},${b},.8)`);}}),
+eternalVoid:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;for(let ring=1;ring<=10;ring++){strokeCircle(cx,cy,ring*9,`rgba(${r},${g},${b},${.04+Math.sin(t*.008+ring*.5)*.01})`,1);}fillCircle(cx,cy,4,`rgba(${r},${g},${b},.6)`);if(Math.random()<.04){const a=Math.random()*6.2832,d=50+Math.random()*30;addParticle(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,0,0,1,3+Math.random()*5,170+Math.random()*40);}for(let i=pcount-1;i>=0;i--){const dx=cx-px[i],dy=cy-py[i];const d=Math.sqrt(dx*dx+dy*dy)||1;if(d<6){removeParticle(i);continue;}pvx[i]+=dx/d*.1;pvy[i]+=dy/d*.05;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.008;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},80%,70%,${plife[i]*.6})`);} }}),
+timeless:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;strokeCircle(cx,cy,40,`rgba(${r},${g},${b},.3)`,1.5);[0,1.57,3.14,4.71].forEach((baseAngle,i)=>{const len=12+i*6;line(cx,cy,cx+Math.cos(baseAngle)*len,cy+Math.sin(baseAngle)*len,`rgba(${r},${g},${b},${.5-i*.08})`,1.5+i*.1);});for(let i=0;i<12;i++){const a=i/12*6.2832;fillCircle(cx+Math.cos(a)*42,cy+Math.sin(a)*21,1.5,`rgba(${r},${g},${b},.4)`);}}}),
+everPresent:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);for(let i=0;i<50;i++){const a=(i*.13+t*.004)%6.2832;const d=i*.8;fillCircle(_W/2+Math.cos(a)*d,_H/2+Math.sin(a)*d*.5,1.2,`rgba(${r},${g},${b},${.2-i*.003})`);} }}),
+undyingStar:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;const phase=(t%180)/180;for(let wave=0;wave<3;wave++){const p=(phase+wave*.33)%1;strokeCircle(cx,cy,p*_W*.6,`rgba(${r},${g},${b},${(1-p)*.25})`,2*(1-p));}fillCircle(cx,cy,16,`rgba(${r},${g},${b},.7)`);fillCircle(cx,cy,10,`rgba(255,255,200,.9)`);for(let i=0;i<20;i++){const a=i/20*6.2832+t*.005;const len=20+Math.sin(t*.04+i*1.3)*12;line(cx+Math.cos(a)*14,cy+Math.sin(a)*14*.5,cx+Math.cos(a)*(14+len),cy+Math.sin(a)*(14+len)*.5,`rgba(${r},${g},${b},${.12+Math.sin(t*.04+i)*.04})`,1.5);} }}),
+theUnending:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;for(let trail=0;trail<6;trail++){const offset=trail*.1;_ctx.beginPath();for(let s=0;s<=80;s++){const theta=s/80*6.2832+t*.012+offset;const denom=1+Math.sin(theta)*Math.sin(theta);const x=cx+Math.cos(theta)*65/denom;const y=cy+Math.sin(theta)*Math.cos(theta)*38/denom;s===0?_ctx.moveTo(x,y):_ctx.lineTo(x,y);}_ctx.closePath();_ctx.strokeStyle=`rgba(${r},${g},${b},${.45-trail*.06})`;_ctx.lineWidth=2.5-trail*.3;_ctx.stroke();} }}),
+soulOfCreation:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;const phase=(t%150)/150;strokeCircle(cx,cy,phase*_W*.5,`rgba(${r},${g},${b},${(1-phase)*.3})`,3*(1-phase)+1);fillCircle(cx,cy,10*(1-phase*.5),`rgba(255,255,200,${.9*(1-phase*.3)})`);if(Math.random()<.15){const a=Math.random()*6.2832,d=phase*_W*.3;addParticle(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,(Math.random()-.5)*1.5,(Math.random()-.5)*.8,1,2+Math.random()*4,Math.random()*360);}for(let i=pcount-1;i>=0;i--){pvx[i]*=.99;pvy[i]*=.99;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.008;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},90%,75%,${plife[i]*.7})`);} }}),
+foreverFlame:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const hBase=t*.3;for(let layer=0;layer<4;layer++){if(Math.random()<.25)addParticle(_W/2+(Math.random()-.5)*(_W*.4-layer*20),_H-5,(Math.random()-.5)*(2-layer*.3),-(2+Math.random()*3-layer*.4),1,6+Math.random()*10+layer*2,(hBase+layer*30)%360);}for(let i=pcount-1;i>=0;i--){pvx[i]+=Math.sin(t*.06+py[i]*.02)*.5;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.01;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},100%,65%,${plife[i]})`);} }}),
+beyondDeath:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;if(Math.random()<.05)addParticle(_W*.2+Math.random()*_W*.6,_H+10,(Math.random()-.5)*.4,-(0.8+Math.random()*1.2),1,8+Math.random()*14,160+Math.random()*60);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i]+Math.sin(t*.04+px[i]*.02)*.5;py[i]+=pvy[i];plife[i]-=.006;if(plife[i]<=0||py[i]<-20){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*.5,`hsla(${phue[i]},80%,80%,${plife[i]*.8})`);fillCircle(px[i],py[i],psz[i],`hsla(${phue[i]},80%,60%,${plife[i]*.15})`);}_ctx.save();_ctx.font=`${14+Math.sin(t*.02)*2}px serif`;_ctx.fillStyle=`rgba(${r},${g},${b},.08)`;['✦','⋆','✧'].forEach((sym,i)=>{const a=i/3*6.2832+t*.005;_ctx.fillText(sym,cx+Math.cos(a)*50-6,cy+Math.sin(a)*25+5);});_ctx.restore();}}),
+// ── OMEGA ──
+omegaPulse:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;const beat=Math.abs(Math.sin(t*.04));const rad=30+beat*40;strokeCircle(cx,cy,rad,`rgba(${r},${g},${b},${.4+beat*.3})`,3+beat*3);strokeCircle(cx,cy,rad*1.5,`rgba(${r},${g},${b},${.15*beat})`,2);if(beat>.85&&Math.random()<.5){const a=Math.random()*6.2832;addParticle(cx,cy,Math.cos(a)*(4+Math.random()*6),Math.sin(a)*(4+Math.random()*6)*.5,1,4+Math.random()*8,Math.random()*60);}for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.018;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},100%,65%,${plife[i]})`);} }}),
+theFinalForm:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;for(let i=0;i<20;i++){const a=i/20*6.2832+t*.003;const d=45+Math.sin(t*.04+i*1.3)*20;fillCircle(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,2,`hsla(${i*18+t},100%,70%,.6)`);}for(let ring=1;ring<=4;ring++){strokeCircle(cx,cy,ring*14,`rgba(${r},${g},${b},${.1+Math.sin(t*.03+ring)*.03})`,2);}fillCircle(cx,cy,12,`rgba(255,255,255,.9)`);}}),
+apocalypse:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(t%8===0){let x=Math.random()*_W,y=0;_ctx.beginPath();_ctx.moveTo(x,y);for(let s=0;s<15;s++){x+=(Math.random()-.5)*80;y+=_H/15;_ctx.lineTo(x,y);}_ctx.strokeStyle=`rgba(${r},${g},${b},.9)`;_ctx.lineWidth=3+Math.random()*4;_ctx.stroke();_ctx.fillStyle=`rgba(${r},${g},${b},.05)`;_ctx.fillRect(0,0,_W,_H);}if(Math.random()<.15)addParticle(Math.random()*_W,Math.random()*_H,(Math.random()-.5)*6,(Math.random()-.5)*6,1,3+Math.random()*6,Math.random()*60);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.03;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},100%,60%,${plife[i]})`);} }}),
+godSlayer:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;for(let i=0;i<6;i++){const a=i/6*6.2832+t*.004;const d=50+Math.sin(t*.05+i*1.2)*15;line(cx+Math.cos(a)*15,cy+Math.sin(a)*15*.5,cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,`rgba(${r},${g},${b},.5)`,3);}fillCircle(cx,cy,14,`rgba(${r},${g},${b},.8)`);fillCircle(cx,cy,8,`rgba(255,255,255,.9)`);if(t%15===0){_ctx.fillStyle=`rgba(${r},${g},${b},.07)`;_ctx.fillRect(0,0,_W,_H);}}}),
+universalCollapse:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;if(Math.random()<.25){const a=Math.random()*6.2832,d=80+Math.random()*20;addParticle(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,0,0,1,3+Math.random()*6,Math.random()*60);}for(let i=pcount-1;i>=0;i--){const dx=cx-px[i],dy=cy-py[i];const d=Math.sqrt(dx*dx+dy*dy)||1;if(d<5){removeParticle(i);continue;}const pull=Math.min(8,200/d);pvx[i]+=dx/d*pull*.08;pvy[i]+=dy/d*pull*.04;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.012;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},100%,65%,${plife[i]*.8})`);}const bright=.5+.5*Math.sin(t*.1);fillCircle(cx,cy,8+bright*12,`rgba(${r},${g},${b},${.4+bright*.3})`);}}),
+theLastWord:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);for(let harmonic=1;harmonic<=6;harmonic++){_ctx.beginPath();for(let x=0;x<=_W;x+=3){const amp=25/harmonic;const y=_H/2+Math.sin(x/_W*6.2832*harmonic+t*.015)*amp*Math.sin(t*.006+harmonic*.5);x===0?_ctx.moveTo(x,y):_ctx.lineTo(x,y);}_ctx.strokeStyle=`rgba(${r},${g},${b},${.2/harmonic})`;_ctx.lineWidth=3/harmonic;_ctx.stroke();}}}),
+oblivionsEdge:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;_ctx.save();_ctx.translate(cx,cy);_ctx.rotate(t*.01);const len=_W*.4;_ctx.beginPath();_ctx.moveTo(-len,0);_ctx.lineTo(len,0);_ctx.strokeStyle=`rgba(${r},${g},${b},.6)`;_ctx.lineWidth=3;_ctx.stroke();_ctx.strokeStyle=`rgba(255,255,255,.3)`;_ctx.lineWidth=1;_ctx.stroke();_ctx.restore();if(Math.random()<.15){const a=Math.random()*6.2832,d=40+Math.random()*30;addParticle(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,0,0,1,2+Math.random()*4,0);}for(let i=pcount-1;i>=0;i--){const dx=cx-px[i],dy=cy-py[i];const d=Math.sqrt(dx*dx+dy*dy)||1;if(d<5){removeParticle(i);continue;}pvx[i]+=dx/d*.2;pvy[i]+=dy/d*.1;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.01;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`rgba(${r},${g},${b},${plife[i]*.6})`);} }}),
+realityBreaker:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);if(Math.random()<.4){const y=Math.random()*_H;const h2=Math.random()*25+2;const shift=Math.random()*60-30;try{const d2=_ctx.getImageData(0,y,_W,h2);_ctx.putImageData(d2,shift,y);}catch(e){}_ctx.fillStyle=`rgba(${r},${g},${b},.2)`;_ctx.fillRect(0,y,_W,h2);}for(let i=0;i<8;i++){_ctx.fillStyle=`rgba(${Math.random()>.5?r:255},0,${Math.random()>.5?b:255},.5)`;_ctx.fillRect(Math.random()*_W,Math.random()*_H,3+Math.random()*12,2);}if(Math.random()<.15)addParticle(Math.random()*_W,Math.random()*_H,(Math.random()-.5)*10,(Math.random()-.5)*10,1,2+Math.random()*6,Math.random()*360);for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];pvx[i]+=(Math.random()-.5)*.6;pvy[i]+=(Math.random()-.5)*.6;plife[i]-=.04;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},100%,60%,${plife[i]})`);} }}),
+dimensionZero:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;fillCircle(cx,cy,2,`rgba(${r},${g},${b},.4)`);if(t%250===0)addParticle(cx+(Math.random()-.5)*5,cy+(Math.random()-.5)*5,(Math.random()-.5)*.05,(Math.random()-.5)*.03,1,50+Math.random()*30,260);for(let i=pcount-1;i>=0;i--){psz[i]+=.15;plife[i]-=.002;if(plife[i]<=0){removeParticle(i);continue;}strokeCircle(px[i],py[i],psz[i],`rgba(${r},${g},${b},${plife[i]*.025})`,1);} }}),
+theTerminus:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;if(Math.random()<.08){const a=Math.random()*6.2832,d=70+Math.random()*15;addParticle(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,0,0,1,2+Math.random()*5,Math.random()*360);}for(let i=pcount-1;i>=0;i--){const dx=cx-px[i],dy=cy-py[i];const d=Math.sqrt(dx*dx+dy*dy)||1;if(d<10){removeParticle(i);continue;}pvx[i]+=dx/d*.35;pvy[i]+=dy/d*.18;px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.01;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},90%,70%,${plife[i]*.8})`);}fillCircle(cx,cy,16,`rgba(0,0,0,1)`);strokeCircle(cx,cy,16,`rgba(${r},${g},${b},.8)`,3);for(let ring=1;ring<=4;ring++){strokeCircle(cx,cy,ring*18,`rgba(${r},${g},${b},${.15/ring})`,1);}}}),
+// ── NULL ──
+nullAura:({r,g,b})=>({frame(t){_ctx.clearRect(0,0,_W,_H);const cx=_W/2,cy=_H/2;_ctx.fillStyle=`rgba(255,255,255,${.02+Math.sin(t*.01)*.01})`;_ctx.fillRect(0,0,_W,_H);for(let ring=1;ring<=12;ring++){const pulse=.5+.5*Math.sin(t*.02+ring*.3);strokeCircle(cx,cy,ring*9*pulse,`rgba(255,255,255,${.06/ring*pulse})`,1);}for(let i=0;i<20;i++){const a=i/20*6.2832+t*.003;const d=45+Math.sin(t*.03+i)*10;fillCircle(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,2,`hsla(${i*18+t*.5},100%,80%,.6)`);}fillCircle(cx,cy,18,`rgba(255,255,255,.95)`);fillCircle(cx,cy,12,`rgba(0,0,0,.9)`);fillCircle(cx,cy,6,`rgba(255,255,255,.8)`);if(Math.random()<.15){const a=Math.random()*6.2832,d=10+Math.random()*50;addParticle(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.5,(Math.random()-.5)*3,(Math.random()-.5)*2,1,2+Math.random()*5,Math.random()*360);}for(let i=pcount-1;i>=0;i--){px[i]+=pvx[i];py[i]+=pvy[i];plife[i]-=.015;if(plife[i]<=0){removeParticle(i);continue;}fillCircle(px[i],py[i],psz[i]*plife[i],`hsla(${phue[i]},100%,85%,${plife[i]})`);} }})
+};
+
+// ═══════════════════════════════════════════
+//  EQUIP
+// ═══════════════════════════════════════════
+let _currentEffectId=null;
+function equipCurrent(){if(st.lastResult)equip(st.lastResult);}
+function equip(item){
+  st.equippedItem=item;
+  document.getElementById('equippedEmpty').style.display='none';
+  document.getElementById('effectCanvas').style.display='block';
+  document.getElementById('equippedInfo').style.display='flex';
+  const n=document.getElementById('equippedName');
+  n.textContent=item.emoji+' '+item.name;n.style.color=item.color;n.style.textShadow=`0 0 18px ${item.glow}`;
+  const r2=document.getElementById('equippedRarity');
+  r2.textContent=item.rarity;r2.style.color=item.color;
+  const s=document.getElementById('equippedSection');
+  s.style.borderColor=item.color+'55';s.style.boxShadow=`0 0 24px ${item.glow}33`;
+  if(_currentEffectId!==item.effectId){
+    _currentEffectId=item.effectId;
+    startEffect(item);
+  }
+}
+function unequip(){
+  st.equippedItem=null;_currentEffectId=null;stopEffect();
+  document.getElementById('equippedEmpty').style.display='';
+  document.getElementById('effectCanvas').style.display='none';
+  document.getElementById('equippedInfo').style.display='none';
+  const s=document.getElementById('equippedSection');
+  s.style.borderColor='';s.style.boxShadow='';
+}
+function startEffect(item){
+  stopEffect();initCanvas();
+  const rgb=parseRGB(item.color);
+  const effectFactory=EFFECTS[item.effectId]||EFFECTS.ember;
+  const effect=effectFactory({r:rgb[0],g:rgb[1],b:rgb[2]});
+  function loop(){effect.frame(_t);_t++;_raf=requestAnimationFrame(loop);}
+  loop();
+}
+
+// ═══════════════════════════════════════════
+//  ROLL ANIMATION
+// ═══════════════════════════════════════════
+const $rollCard=document.getElementById('rollCard');
+const $idle=document.getElementById('idleView');
+const $result=document.getElementById('resultView');
+const $cRarity=document.getElementById('cRarity');
+const $cEmoji=document.getElementById('cEmoji');
+const $cName=document.getElementById('cName');
+const $cDesc=document.getElementById('cDesc');
+const $cChance=document.getElementById('cChance');
+const $equipBtn=document.getElementById('equipBtn');
+const $particles=document.getElementById('cardParticles');
+
+function startRoll(){
+  if(st.rolling)return;
+  st.rolling=true;
+  document.getElementById('rollBtn').disabled=true;
+  const result=weightedRandom();
+  const dur=SPEED_DUR[st.speedLevel];
+  const sched=[];
+  for(let i=0;i<18;i++)sched.push(55);
+  const raw=[70,88,110,140,178,225,285,360,455,575,730,930];
+  const rawSum=raw.reduce((a,b)=>a+b,0)+18*55;
+  const sc=Math.max(.3,dur/rawSum);
+  raw.forEach(d=>sched.push(Math.round(d*sc)));
+  $rollCard.classList.add('cycling');
+  $idle.style.display='none';
+  $result.style.display='flex';
+  let idx=0,lastTime=performance.now();
+  function tick(now){
+    if(idx>=sched.length){
+      $rollCard.classList.remove('cycling');
+      setCard(result,false);
+      $rollCard.classList.remove('revealed-anim');
+      void $rollCard.offsetWidth;
+      $rollCard.classList.add('revealed-anim');
+      spawnParticles(result);
+      const earned=COIN_VAL[result.rarity];
+      st.coins+=earned;showToast('+'+earned.toLocaleString()+' 💰');
+      if(st.luckLeft>0){st.luckLeft--;if(st.luckLeft<=0){st.luck=1;st.luckLeft=0;}}
+      st.rolls++;st.lastResult=result;addHistory(result);updateUI();
+      saveGame();
+      st.rolling=false;
+      document.getElementById('rollBtn').disabled=false;
+      // Auto-roller continuation
+      if(st.autoRolling){
+        const rank=RARITY_RANK.indexOf(result.rarity);
+        if(rank>=5){ // Mythic or higher — stop
+          st.autoRolling=false;
+          updateAutoRollerUI();
+          showToast('🛑 Auto-roll stopped: '+result.rarity+'!');
+        } else {
+          setTimeout(startRoll,80);
+        }
+      }
+      return;
+    }
+    if(now-lastTime>=sched[idx]){
+      setCycleFrame(ITEMS[Math.floor(Math.random()*ITEMS.length)]);
+      lastTime=now;idx++;
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+function setCycleFrame(item){
+  $cRarity.textContent=item.rarity.toUpperCase();$cRarity.style.color=item.color;
+  $cEmoji.textContent=item.emoji;$cEmoji.style.filter='';
+  $cName.textContent=item.name;$cName.style.textShadow='none';
+  $cDesc.textContent='';$cChance.textContent='';
+  $equipBtn.style.display='none';
+  $rollCard.style.setProperty('--g','transparent');
+  $rollCard.style.borderColor='rgba(255,255,255,.07)';
+  $rollCard.style.boxShadow='none';
+}
+function setCard(item,cycling){
+  $idle.style.display='none';$result.style.display='flex';
+  $cRarity.textContent=item.rarity.toUpperCase();$cRarity.style.color=item.color;
+  $cEmoji.textContent=item.emoji;$cEmoji.style.filter=cycling?'':`drop-shadow(0 0 18px ${item.glow})`;
+  $cName.textContent=item.name;$cName.style.textShadow=cycling?'none':`0 0 22px ${item.glow}`;
+  $cDesc.textContent=cycling?'':item.desc;
+  $cChance.textContent=cycling?'':formatChance(item.weight);
+  $equipBtn.style.display=cycling?'none':'';
+  $rollCard.style.setProperty('--g',cycling?'transparent':item.glow);
+  $rollCard.style.borderColor=cycling?'rgba(255,255,255,.07)':item.color+'99';
+  $rollCard.style.boxShadow=cycling?'none':`0 0 36px ${item.glow},0 0 72px ${item.glow}22,inset 0 0 30px ${item.glow}11`;
+}
+const PARTICLE_POOL=[];
+function spawnParticles(item){
+  while($particles.firstChild){PARTICLE_POOL.push($particles.removeChild($particles.firstChild));}
+  const rank=RARITY_RANK.indexOf(item.rarity);
+  const count=Math.min(8+rank*6,60);
+  const frag=document.createDocumentFragment();
+  for(let i=0;i<count;i++){
+    const p=PARTICLE_POOL.length?PARTICLE_POOL.pop():document.createElement('div');
+    p.className='p-dot';const sz=4+Math.random()*8;
+    p.style.cssText=`width:${sz}px;height:${sz}px;background:${item.color};left:${5+Math.random()*90}%;bottom:${5+Math.random()*40}%;--d:${1+Math.random()*2}s;--x:${Math.random()*50}px;animation-delay:${Math.random()*.4}s;box-shadow:0 0 ${sz*2}px ${item.glow};animation:pFloat var(--d,2s) ease-out forwards`;
+    frag.appendChild(p);
+  }
+  $particles.appendChild(frag);
+}
+
+function formatChance(weight){
+  const oneIn=Math.round(TOTAL_W/weight);
+  if(oneIn>=1000000)return`1 in ${(oneIn/1000000).toFixed(1)}M`;
+  if(oneIn>=1000)return`1 in ${(oneIn/1000).toFixed(1)}K`;
+  return`1 in ${oneIn.toLocaleString()}`;
+}
+
+// ═══════════════════════════════════════════
+//  AUTO ROLLER
+// ═══════════════════════════════════════════
+function toggleAutoRoll(){
+  if(!st.autoRollerOwned)return;
+  st.autoRolling=!st.autoRolling;
+  updateAutoRollerUI();
+  if(st.autoRolling&&!st.rolling){
+    startRoll();
+  }
+}
+function updateAutoRollerUI(){
+  const btn=document.getElementById('autoBtn');
+  if(!st.autoRollerOwned){btn.style.display='none';return;}
+  btn.style.display='';
+  if(st.autoRolling){
+    btn.textContent='🔴 AUTO: ON';
+    btn.className='auto-btn on';
+  } else {
+    btn.textContent='🤖 AUTO: OFF';
+    btn.className='auto-btn off';
+  }
+}
+
+// ═══════════════════════════════════════════
+//  SHOP
+// ═══════════════════════════════════════════
+const POTIONS=[
+  {id:'p1',name:'Minor Luck',emoji:'🧪',desc:'+1× luck for 15 rolls',price:100,bonus:1,rolls:15},
+  {id:'p2',name:'Luck Brew',emoji:'⚗️',desc:'+2× luck for 30 rolls',price:350,bonus:2,rolls:30},
+  {id:'p3',name:'Grand Elixir',emoji:'🔮',desc:'+5× luck for 50 rolls',price:1200,bonus:5,rolls:50},
+  {id:'p4',name:'Mega Luck',emoji:'💎',desc:'+15× luck for 100 rolls',price:15000,bonus:15,rolls:100},
+  {id:'p5',name:'Insane Luck',emoji:'🧿',desc:'Limited 25x luck',price:50000,bonus:25,rolls:500},
+  {id:'p6',name:"Gamblers's Luck",emoji:'🎲',desc:'ablot of luck',price:150000,bonus:1000000000,rolls:4},
+];
+const SPEEDS=[
+  {level:1,name:'Speed I',  emoji:'⚡',desc:'Roll time: 2.4s',price:500},
+  {level:2,name:'Speed II', emoji:'⚡',desc:'Roll time: 1.7s',price:1500},
+  {level:3,name:'Speed III',emoji:'⚡',desc:'Roll time: 1.1s',price:4000},
+  {level:4,name:'Speed IV',emoji:'⚡',desc:'Roll time: 0.7s',price:15000},
+  {level:5,name:'Speed V',  emoji:'⚡',desc:'Roll time: 0.4s',price:35000},
+];
+const AUTO_ROLLER={id:'autoRoller',name:'Auto Roller',emoji:'🤖',desc:'Automatically rolls at your current speed. Stops on Mythic or higher.',price:85000};
+
+let _shopOpen=false;
+function renderShop(){
+  const g=document.getElementById('shopGrid');g.innerHTML='';
+  POTIONS.forEach(p=>{const d=document.createElement('div');d.className='shop-item';d.innerHTML=`<div class="shop-item-name">${p.emoji} ${p.name}</div><div class="shop-item-desc">${p.desc}</div><div class="shop-item-price"><span>💰</span>${p.price.toLocaleString()}</div><button class="buy-btn" ${st.coins>=p.price?'':'disabled'} onclick="buyPotion('${p.id}')">Buy</button>`;g.appendChild(d);});
+  const sg=document.getElementById('speedGrid');sg.innerHTML='';
+  SPEEDS.forEach(s=>{const owned=st.speedLevel>=s.level;const canBuy=!owned&&st.coins>=s.price&&st.speedLevel===s.level-1;const d=document.createElement('div');d.className='shop-item';d.innerHTML=`<div class="shop-item-name">${s.emoji} ${s.name}</div><div class="shop-item-desc">${s.desc}</div><div class="shop-item-price"><span>💰</span>${s.price.toLocaleString()}</div><button class="buy-btn ${owned?'owned':''}" ${canBuy?'':owned?'':'disabled'} onclick="buySpeed(${s.level})">${owned?'✓ Owned':'Buy'}</button>`;sg.appendChild(d);});
+  // Auto-roller
+  const ag=document.getElementById('autoGrid');ag.innerHTML='';
+  const ar=AUTO_ROLLER;const arOwned=st.autoRollerOwned;const arCanBuy=!arOwned&&st.coins>=ar.price;
+  const ad=document.createElement('div');ad.className='shop-item';
+  ad.innerHTML=`<div class="shop-item-name">${ar.emoji} ${ar.name}</div><div class="shop-item-desc">${ar.desc}</div><div class="shop-item-price"><span>💰</span>${ar.price.toLocaleString()}</div><button class="buy-btn ${arOwned?'owned':''}" ${arCanBuy?'':arOwned?'':'disabled'} onclick="buyAutoRoller()">${arOwned?'✓ Owned':'Buy'}</button>`;
+  ag.appendChild(ad);
+}
+function buyPotion(id){const p=POTIONS.find(x=>x.id===id);if(!p||st.coins<p.price)return;st.coins-=p.price;st.luck=1+p.bonus;st.luckLeft=p.rolls;showToast('-'+p.price.toLocaleString()+' 💰');updateUI();saveGame();}
+function buySpeed(level){const s=SPEEDS.find(x=>x.level===level);if(!s||st.coins<s.price||st.speedLevel!==level-1)return;st.coins-=s.price;st.speedLevel=level;showToast('-'+s.price.toLocaleString()+' 💰');updateUI();saveGame();}
+function buyAutoRoller(){
+  if(st.autoRollerOwned||st.coins<AUTO_ROLLER.price)return;
+  st.coins-=AUTO_ROLLER.price;st.autoRollerOwned=true;
+  showToast('-'+AUTO_ROLLER.price.toLocaleString()+' 💰');
+  updateAutoRollerUI();updateUI();saveGame();
+}
+function toggleShop(){_shopOpen=!_shopOpen;document.querySelector('.shop-section').classList.toggle('shop-open',_shopOpen);if(_shopOpen)renderShop();}
+
+// ═══════════════════════════════════════════
+//  HISTORY
+// ═══════════════════════════════════════════
+function addHistory(item){
+  st.history.unshift(item);
+  const g=document.getElementById('historyGrid');
+  const c=document.createElement('div');c.className='h-chip';c.style.setProperty('--bc',item.color+'aa');
+  c.innerHTML=`<span>${item.emoji}</span><span>${item.name}</span>`;
+  c.onclick=()=>{st.lastResult=item;setCard(item,false);};
+  g.insertBefore(c,g.firstChild);
+  document.getElementById('historyCount').textContent=st.history.length.toLocaleString()+' roll'+(st.history.length===1?'':'s');
+}
+
+function rebuildHistoryDOM(){
+  const g=document.getElementById('historyGrid');g.innerHTML='';
+  // Add in reverse (oldest last, newest first)
+  st.history.forEach(item=>{
+    const c=document.createElement('div');c.className='h-chip';c.style.setProperty('--bc',item.color+'aa');
+    c.innerHTML=`<span>${item.emoji}</span><span>${item.name}</span>`;
+    c.onclick=()=>{st.lastResult=item;setCard(item,false);};
+    c.style.animation='none'; // no animation on load
+    g.appendChild(c);
+  });
+  document.getElementById('historyCount').textContent=st.history.length.toLocaleString()+' roll'+(st.history.length===1?'':'s');
+}
+
+// ═══════════════════════════════════════════
+//  TOAST + UI
+// ═══════════════════════════════════════════
+let _toastEl=null,_toastTimer=null;
+function showToast(msg){
+  if(_toastEl){clearTimeout(_toastTimer);_toastEl.remove();}
+  _toastEl=document.createElement('div');_toastEl.className='coin-toast';_toastEl.textContent=msg;
+  document.body.appendChild(_toastEl);
+  _toastTimer=setTimeout(()=>{_toastEl&&_toastEl.remove();_toastEl=null;},2100);
+}
+function updateUI(){
+  document.getElementById('coinDisplay').textContent=st.coins.toLocaleString();
+  document.getElementById('rollsDisplay').textContent=st.rolls.toLocaleString();
+  document.getElementById('luckDisplay').textContent='×'+st.luck.toFixed(1)+(st.luckLeft>0?` (${st.luckLeft} left)`:'');
+  document.getElementById('speedDisplay').textContent='Lv.'+st.speedLevel;
+  document.getElementById('luckChip').classList.toggle('luck-active',st.luckLeft>0);
+  updateAutoRollerUI();
+  if(_shopOpen)renderShop();
+}
+
+window.addEventListener('resize',()=>{if(st.equippedItem)startEffect(st.equippedItem);});
+
+// ═══════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════
+loadGame();
+rebuildHistoryDOM();
+updateUI();
+if(st.equippedItem){
+  equip(st.equippedItem);
+  setCard(st.equippedItem,false);
+}
+</script>
+</body>
+</html>
